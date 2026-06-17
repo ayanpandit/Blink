@@ -41,3 +41,19 @@ This log lists significant architectural decisions made during the design of Bli
 * **Decision**: Implement a custom R8/ProGuard configuration file to aggressively optimize Apache POI.
 * **Reason**: Apache POI libraries can exceed 20MB in size. Since Blink only needs reading functionality for text, layouts, and spreadsheets, we do not need chart-creation, writing, validation, or styling helper tools.
 * **Impact**: Unused POI classes are stripped out during the release build. ProGuard configurations must be rigorously verified to avoid runtime `ClassNotFoundException` due to reflective class usage within Apache POI.
+
+---
+
+## 2026-06-17: Centralized Version Catalog for Dependencies
+
+* **Decision**: Centralize all dependency coordinates and Gradle plugins in a Gradle Version Catalog (`libs.versions.toml`).
+* **Reason**: Managing dependencies across 15 separate Gradle modules individually leads to version drift, compilation conflicts, and difficult upgrades. A centralized TOML file ensures version consistency and type-safe referencing.
+* **Impact**: Individual module build files are prohibited from declaring hardcoded dependency versions. All references must resolve through `libs.*`.
+
+---
+
+## 2026-06-17: Unified Sealed Interface Error Model
+
+* **Decision**: Define a single unified sealed interface `AppError` in the `:core:common` module.
+* **Reason**: Each format parser generates library-specific exceptions (e.g. POI Exceptions, PDFium JNI errors, standard IOExceptions). Capturing these raw exceptions in the presentation layer leads to bloated, unmaintainable catch blocks. By mapping internal errors to a strict sealed model, we decouple the UI from format-specific exceptions.
+* **Impact**: Core and feature loading layers must map all internal parse and load exceptions to the appropriate sub-types of `AppError` before returning them to ViewModels.

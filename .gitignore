@@ -1,0 +1,30 @@
+# Built artifacts
+**/build/
+*.apk
+*.aar
+*.ap_
+*.der
+
+# Gradle files
+.gradle/
+/local.properties
+/.gradle
+/gradle-app.setting
+.gradle
+
+# Android Studio / IntelliJ IDEA
+.idea/
+*.iml
+.navigation/
+captures/
+.externalNativeBuild/
+.cxx/
+local.properties
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Setup tools local directory
+tools/setup_env.sh
+/tools
