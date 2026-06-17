@@ -150,7 +150,15 @@ class FileResolverImpl(
                 println("TEST EXCEPTION SECURITY resolveMetadata: $e")
                 e.printStackTrace()
                 logger.e(TAG, "SecurityException while reading URI: $uriString", e)
-                Result.failure(AppErrorException(AppError.FileError.PermissionDenied))
+                val stackTrace = e.stackTraceToString()
+                Result.failure(
+                    AppErrorException(
+                        AppError.FileError.PermissionDenied(
+                            causeMessage = e.message,
+                            stackTrace = stackTrace
+                        )
+                    )
+                )
             } catch (e: Exception) {
                 println("TEST EXCEPTION GENERIC resolveMetadata: $e")
                 e.printStackTrace()
@@ -194,7 +202,15 @@ class FileResolverImpl(
                 println("TEST EXCEPTION SECURITY openInputStream: $e")
                 e.printStackTrace()
                 logger.e(TAG, "SecurityException opening stream: $uriString", e)
-                Result.failure(AppErrorException(AppError.FileError.PermissionDenied))
+                val stackTrace = e.stackTraceToString()
+                Result.failure(
+                    AppErrorException(
+                        AppError.FileError.PermissionDenied(
+                            causeMessage = e.message,
+                            stackTrace = stackTrace
+                        )
+                    )
+                )
             } catch (e: Exception) {
                 println("TEST EXCEPTION GENERIC openInputStream: $e")
                 e.printStackTrace()

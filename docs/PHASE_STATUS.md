@@ -25,9 +25,9 @@ This file lists the current status of each project development phase.
 ---
 
 ## Phase 2: Android File System Integration
-* **Status**: `COMPLETED`
-* **Completion Date**: 2026-06-18
-* **Summary**: Implemented Storage Access Framework (SAF) document acquisition. Configured intent-filters for MainActivity in `AndroidManifest.xml` supporting external views/shares (PDF, DOC/X, XLS/X, PPT/X, CSV, TXT) and content/file schemes. Built robust URI resolver querying size, name, extension, and last modified variables. Integrated system doc picker in HomeScreen. Added temporary Metadata preview screen displaying queried fields. All unit tests and static checks compile and run successfully.
+* **Status**: `IN_PROGRESS`
+* **Completion Date**: N/A
+* **Summary**: Implemented Storage Access Framework (SAF) document acquisition. Configured intent-filters for MainActivity in `AndroidManifest.xml` supporting external views/shares (PDF, DOC/X, XLS/X, PPT/X, CSV, TXT) and content/file schemes. Built robust URI resolver querying size, name, extension, and last modified variables. Integrated system doc picker in HomeScreen. Added temporary Metadata preview screen displaying queried fields. All unit tests and static checks compile and run successfully. Currently resolving storage access permission errors on physical devices.
 
 ---
 

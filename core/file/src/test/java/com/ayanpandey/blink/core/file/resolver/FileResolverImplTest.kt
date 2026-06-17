@@ -180,7 +180,7 @@ class FileResolverImplTest {
             // Assert
             assertTrue(result.isFailure)
             val exception = result.exceptionOrNull() as? AppErrorException
-            assertEquals(AppError.FileError.PermissionDenied, exception?.error)
+            assertTrue(exception?.error is AppError.FileError.PermissionDenied)
         }
 
     @Test
@@ -212,6 +212,6 @@ class FileResolverImplTest {
             // Assert
             assertTrue(result.isFailure)
             val exception = result.exceptionOrNull() as? AppErrorException
-            assertEquals(AppError.FileError.PermissionDenied, exception?.error)
+            assertTrue(exception?.error is AppError.FileError.PermissionDenied)
         }
 }

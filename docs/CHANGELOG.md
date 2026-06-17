@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.1-alpha] - 2026-06-18
+
+### Added
+- Detailed diagnostic logging for Storage Access Framework (SAF) URI resolution and permission checks.
+- Copyable debugging information panel on error/access denied screens, capturing selected URI, authority, scheme, granted permissions, persisted permissions, and complete Exception stack traces.
+
+### Changed
+- Refactored `PermissionDenied` error representation into a data class to carry detailed failure context and stack traces.
+- Upgraded app versioning configuration to `versionCode = 3` and `versionName = "1.0.2"`.
+
 ## [0.3.0-alpha] - 2026-06-18
 
 ### Added

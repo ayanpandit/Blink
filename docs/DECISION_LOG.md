@@ -74,3 +74,12 @@ This log lists significant architectural decisions made during the design of Bli
 * **Reason**: SAF temporary permissions granted to a launched Activity do not automatically propagate to background coroutines running on `Dispatchers.IO` or when accessing the `ContentResolver` using application contexts. By taking persistable read permissions on `content://` URIs immediately upon acquisition, we prevent "Access Denied" `SecurityException` crashes during subsequent background metadata queries and file reads. Furthermore, accessing the URI via the active Activity context's ContentResolver guarantees that even if a custom document provider does not support persistable URI permissions, our app still has temporary access to read and query it during the active user session.
 * **Impact**: All content URI entry points (Compose file picker callbacks and intent-based launcher starts) must call `takePersistableUriPermission` with `FLAG_GRANT_READ_URI_PERMISSION`. The file resolver tracks the current active activity via a lifecycle listener and resolves all content URIs using the active Activity's `ContentResolver`.
 
+---
+
+## 2026-06-18: Runtime SAF Diagnostic Logging and Debug Details Overlay
+
+* **Decision**: Refactor `AppError.FileError.PermissionDenied` to carry throwable cause details and stack traces, and add a copyable visual diagnostic panel to the error screen displaying URI scheme, authority, checked permissions, persisted permissions list, and exception stack trace.
+* **Reason**: Permission denials under Android Storage Access Framework (SAF) are highly environment-dependent and often impossible to reproduce on emulators or other devices. Standard stack traces are normally swallowed or logged only in standard logcat which is inaccessible to end users on non-development physical devices. Providing a diagnostic panel directly on-screen with complete details (including copy-paste capability) enables rapid, evidence-based debugging on real physical devices.
+* **Impact**: `PermissionDenied` is changed to a data class storing failure cause and stack traces. `FileResolverImpl` catches `SecurityException` and captures the stack trace string. The `MetadataScreen` displays a detailed copyable debug card when in an error state.
+
+

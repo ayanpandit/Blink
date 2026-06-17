@@ -4,7 +4,10 @@ sealed interface AppError {
     sealed interface FileError : AppError {
         data object FileNotFound : FileError
 
-        data object PermissionDenied : FileError
+        data class PermissionDenied(
+            val causeMessage: String? = null,
+            val stackTrace: String? = null
+        ) : FileError
 
         data object LimitExceeded : FileError
 
