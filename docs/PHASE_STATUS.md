@@ -32,12 +32,14 @@ This file lists the current status of each project development phase.
 ---
 
 ## Phase 3: Core Document Engine
-* **Status**: `COMPLETED`
-* **Completion Date**: 2026-06-18
-* **Summary**: Established the unified document architecture framework. Created domain-level type system (`DocumentType` enum), `Document` data model, `DocumentState` sealed interface for lifecycle management, and viewer/renderer/factory contracts (`DocumentViewer`, `DocumentRenderer`, `DocumentFactory`). Extended `AppError` with `DocumentError` hierarchy. Implemented `DocumentFactoryImpl` in `:core:file` for type detection and whitelist validation. Created new `:feature:viewer` module with `DocumentViewerImpl`, `ViewerViewModel`, and placeholder `ViewerScreen`. Wired navigation routes and DI. Added "Open in Viewer" button on `MetadataScreen`. All unit tests pass.
+* **Status**: `IN_PROGRESS`
+* **Completion Date**: N/A
+* **Summary**: Established the unified document architecture framework. Created domain-level type system (`DocumentType` enum), `Document` data model, `DocumentState` sealed interface for lifecycle management, and viewer/renderer/factory contracts (`DocumentViewer`, `DocumentRenderer`, `DocumentFactory`). Extended `AppError` with `DocumentError` hierarchy. Implemented `DocumentFactoryImpl` in `:core:file` for type detection and whitelist validation. Created new `:feature:viewer` module with `DocumentViewerImpl`, `ViewerViewModel`, and placeholder `ViewerScreen`. Wired navigation routes and DI. Added "Open in Viewer" button on `MetadataScreen`. All unit tests pass. Pending physical device validation of Metadata → Viewer navigation flow.
 * **Key Decisions**:
   - `DocumentFactory` interface placed in `:domain:contract` to avoid circular module dependencies (`:feature:viewer` depends on `:domain`, not `:core:file`).
   - Empty renderer list passed to `ViewerViewModel` — renderers will be registered in subsequent phases.
+* **Blocking Bugs Fixed**:
+  - v1.0.5: Removed broken Java reflection code in `DocumentViewerImpl.loadDocument()` that attempted to extract a `FileDescriptor` from `ContentResolver.openInputStream()`. Android's `ParcelFileDescriptor.AutoCloseInputStream` does not expose an `fd` field — causing `NoSuchFieldException` mapped to `CorruptedUri` error. The factory only needs metadata fields, not a real file descriptor.
 
 ---
 

@@ -81,6 +81,7 @@ fun BlinkNavHost(
             arguments = listOf(navArgument("uri") { type = NavType.StringType }),
         ) { backStackEntry ->
             val uri = backStackEntry.arguments?.getString("uri") ?: ""
+            appContainer.logger.d("BlinkNavHost", "Metadata route received | uri=$uri")
             val viewModel =
                 androidx.lifecycle.viewmodel.compose.viewModel {
                     MetadataViewModel(appContainer.fileResolver)
@@ -90,7 +91,12 @@ fun BlinkNavHost(
                 viewModel = viewModel,
                 onBackClick = { navController.popBackStack() },
                 onOpenClick = { targetUri ->
-                    navController.navigate(Screen.Viewer.createRoute(targetUri))
+                    appContainer.logger.d("BlinkNavHost",
+                        "onOpenClick | targetUri=$targetUri")
+                    val route = Screen.Viewer.createRoute(targetUri)
+                    appContainer.logger.d("BlinkNavHost",
+                        "onOpenClick | generatedRoute=$route")
+                    navController.navigate(route)
                 }
             )
         }
@@ -99,10 +105,12 @@ fun BlinkNavHost(
             arguments = listOf(navArgument("uri") { type = NavType.StringType }),
         ) { backStackEntry ->
             val uri = backStackEntry.arguments?.getString("uri") ?: ""
+            appContainer.logger.d("BlinkNavHost",
+                "Viewer route received | uri=$uri | uriLength=${uri.length}")
             val viewModel = androidx.lifecycle.viewmodel.compose.viewModel {
                 com.ayanpandey.blink.feature.viewer.ViewerViewModel(
                     appContainer.documentViewer,
-                    emptyList() // Renderers list will be populated in subsequent phases
+                    emptyList()
                 )
             }
             com.ayanpandey.blink.feature.viewer.ViewerScreen(

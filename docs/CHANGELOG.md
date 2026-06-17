@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.4.1-alpha] - 2026-06-18
+
+### Fixed
+- **Phase 3 Blocking Bug**: `DocumentViewerImpl.loadDocument()` used Java reflection (`getDeclaredField("fd")`) to extract a `FileDescriptor` from the InputStream returned by `ContentResolver.openInputStream()`. On Android, this returns `ParcelFileDescriptor.AutoCloseInputStream`, which does NOT have an `fd` field. This threw `NoSuchFieldException`, caught by a generic `catch` block and misreported as `AppError.FileError.CorruptedUri`. Since `DocumentFactory` only uses metadata fields (name, MIME, size) and not the FileDescriptor, the entire reflection/InputStream flow was removed. The factory now receives a dummy `FileDescriptor()`.
+
+### Changed
+- Upgraded app versioning to `versionCode = 6` and `versionName = "1.0.5"`.
+- Removed unnecessary `openInputStream()` call from `DocumentViewerImpl.loadDocument()` — document model creation only requires metadata, not file content.
+- Enhanced `ViewerScreen` error display to show error type, details, and received URI for on-device debugging.
+- Added comprehensive diagnostic logging in `BlinkNavHost` (Metadata→Viewer navigation) and `DocumentViewerImpl` (each loading step).
+
 ## [0.4.0-alpha] - 2026-06-18
 
 ### Added

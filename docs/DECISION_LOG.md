@@ -107,4 +107,11 @@ This log lists significant architectural decisions made during the design of Bli
 * **Impact**: Both extension and MIME type mappings must be maintained in sync when adding new supported formats.
 
 
+---
+
+## 2026-06-18: Document Model Creation Without InputStream or FileDescriptor
+
+* **Decision**: `DocumentViewerImpl.loadDocument()` creates a `Document` model using only metadata (name, MIME type, size, extension) obtained from `FileResolver.resolveMetadata()`. It does NOT open an InputStream or extract a FileDescriptor during the model creation step.
+* **Reason**: The original implementation opened an `InputStream` via `ContentResolver.openInputStream()` and used Java reflection (`getDeclaredField("fd")`) to extract a `FileDescriptor` from the stream. On Android, `openInputStream()` returns `ParcelFileDescriptor.AutoCloseInputStream`, which does not expose an `fd` field. This caused `NoSuchFieldException` on every document load, silently mapped to a `CorruptedUri` error. Since `DocumentFactory.createDocument()` only uses metadata fields for type detection and model construction, the InputStream and FileDescriptor are unnecessary at this stage. File content access (via InputStream) will be handled by individual format renderers in later phases.
+* **Impact**: `DocumentFactory.createDocument()` still accepts a `FileDescriptor` parameter for API forward-compatibility with future rendering engines, but receives a dummy `FileDescriptor()` during the architecture validation phase.
 

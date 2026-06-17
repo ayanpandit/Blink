@@ -70,11 +70,35 @@ fun ViewerScreen(
                     )
                 }
                 is DocumentState.Error -> {
-                    Text(
-                        text = "Failed to load document: ${currentState.error}",
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodyLarge
-                    )
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Failed to load document",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.headlineSmall
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Error Type: ${currentState.error::class.simpleName}",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Text(
+                            text = "Error: ${currentState.error}",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Received URI: $uriString",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        Text(
+                            text = "URI Length: ${uriString.length}",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
                 }
             }
         }

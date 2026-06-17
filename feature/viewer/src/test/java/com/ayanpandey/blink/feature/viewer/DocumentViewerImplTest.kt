@@ -17,7 +17,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.FileDescriptor
-import java.io.InputStream
 
 class DocumentViewerImplTest {
 
@@ -46,26 +45,12 @@ class DocumentViewerImplTest {
         extension = "pdf"
     )
 
-    // Helper subclass that includes the "fd" field so reflection succeeds
-    class TestInputStream(val fd: FileDescriptor) : InputStream() {
-        private var closed = false
-        override fun read(): Int = -1
-        override fun close() {
-            closed = true
-            super.close()
-        }
-        fun isClosed(): Boolean = closed
-    }
-
     @Test
     fun loadDocument_success() = runTest {
         coEvery { fileResolver.resolveMetadata(testUri) } returns Result.success(testMetadata)
-        val testFd = FileDescriptor()
-        val inputStream = TestInputStream(testFd)
-        coEvery { fileResolver.openInputStream(testUri) } returns Result.success(inputStream)
         every {
             documentFactory.createDocument(
-                fileDescriptor = testFd,
+                fileDescriptor = any(),
                 uriString = testUri,
                 displayName = "doc.pdf",
                 mimeType = "application/pdf",
@@ -80,7 +65,6 @@ class DocumentViewerImplTest {
         assertEquals(testDoc, result.getOrThrow())
         assertEquals(DocumentState.Ready(testDoc), viewer.state.value)
         assertEquals(testDoc, viewer.getMetadata())
-        assertTrue(inputStream.isClosed())
     }
 
     @Test
@@ -95,27 +79,12 @@ class DocumentViewerImplTest {
     }
 
     @Test
-    fun loadDocument_openStreamFailure() = runTest {
-        coEvery { fileResolver.resolveMetadata(testUri) } returns Result.success(testMetadata)
-        val error = AppError.FileError.PermissionDenied("Access denied")
-        coEvery { fileResolver.openInputStream(testUri) } returns Result.failure(AppErrorException(error))
-
-        val result = viewer.loadDocument(testUri)
-
-        assertTrue(result.isFailure)
-        assertEquals(DocumentState.Error(error), viewer.state.value)
-    }
-
-    @Test
     fun loadDocument_factoryFailure() = runTest {
         coEvery { fileResolver.resolveMetadata(testUri) } returns Result.success(testMetadata)
-        val testFd = FileDescriptor()
-        val inputStream = TestInputStream(testFd)
-        coEvery { fileResolver.openInputStream(testUri) } returns Result.success(inputStream)
         val error = AppError.DocumentError.UnsupportedDocument
         every {
             documentFactory.createDocument(
-                fileDescriptor = testFd,
+                fileDescriptor = any(),
                 uriString = testUri,
                 displayName = "doc.pdf",
                 mimeType = "application/pdf",
@@ -128,18 +97,14 @@ class DocumentViewerImplTest {
 
         assertTrue(result.isFailure)
         assertEquals(DocumentState.Error(error), viewer.state.value)
-        assertTrue(inputStream.isClosed())
     }
 
     @Test
     fun closeDocument_resetsToIdle() = runTest {
         coEvery { fileResolver.resolveMetadata(testUri) } returns Result.success(testMetadata)
-        val testFd = FileDescriptor()
-        val inputStream = TestInputStream(testFd)
-        coEvery { fileResolver.openInputStream(testUri) } returns Result.success(inputStream)
         every {
             documentFactory.createDocument(
-                fileDescriptor = testFd,
+                fileDescriptor = any(),
                 uriString = testUri,
                 displayName = "doc.pdf",
                 mimeType = "application/pdf",
@@ -154,5 +119,10 @@ class DocumentViewerImplTest {
         viewer.closeDocument()
         assertEquals(DocumentState.Idle, viewer.state.value)
         assertTrue(viewer.getMetadata() == null)
+    }
+
+    @Test
+    fun initialState_isIdle() {
+        assertEquals(DocumentState.Idle, viewer.state.value)
     }
 }

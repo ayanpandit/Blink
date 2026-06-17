@@ -21,77 +21,73 @@ class DocumentViewerImpl(
     override val state: StateFlow<DocumentState> = _state.asStateFlow()
     private var currentDocument: Document? = null
 
+    @Suppress("TooGenericExceptionCaught")
     override suspend fun loadDocument(uriString: String): Result<Document> {
-        logger.d(TAG, "loadDocument: Starting load for $uriString")
+        logger.d(TAG, "loadDocument: START | uriString=$uriString")
         _state.value = DocumentState.Loading
-        
+
+        // Step 1: Resolve metadata
+        logger.d(TAG, "loadDocument: Step 1 - Resolving metadata for $uriString")
         val metadataResult = fileResolver.resolveMetadata(uriString)
         if (metadataResult.isFailure) {
             val exception = metadataResult.exceptionOrNull()!!
-            val error = (exception as? AppErrorException)?.error ?: com.ayanpandey.blink.core.common.error.AppError.UnknownError(exception)
+            val error = (exception as? AppErrorException)?.error
+                ?: com.ayanpandey.blink.core.common.error.AppError.UnknownError(exception)
+            logger.e(TAG, "loadDocument: Step 1 FAILED | error=$error | exception=${exception.message}")
             _state.value = DocumentState.Error(error)
             return Result.failure(exception)
         }
         val metadata = metadataResult.getOrThrow()
+        logger.i(TAG, "loadDocument: Step 1 SUCCESS | fileName=${metadata.fileName} " +
+            "| mimeType=${metadata.mimeType} | size=${metadata.fileSize} " +
+            "| extension=${metadata.extension} | metadataUri=${metadata.uri}")
 
-        val streamResult = fileResolver.openInputStream(uriString)
-        if (streamResult.isFailure) {
-            val exception = streamResult.exceptionOrNull()!!
-            val error = (exception as? AppErrorException)?.error ?: com.ayanpandey.blink.core.common.error.AppError.UnknownError(exception)
-            _state.value = DocumentState.Error(error)
-            return Result.failure(exception)
-        }
-        val inputStream = streamResult.getOrThrow()
-
+        // Step 2: Create Document model via factory (no InputStream/FileDescriptor needed)
+        logger.d(TAG, "loadDocument: Step 2 - Creating Document via DocumentFactory")
         return try {
-            val fdField = inputStream.javaClass.getDeclaredField("fd")
-            fdField.isAccessible = true
-            val fd = fdField.get(inputStream) as java.io.FileDescriptor
-            
             val factoryResult = documentFactory.createDocument(
-                fileDescriptor = fd,
+                fileDescriptor = FileDescriptor(),
                 uriString = uriString,
                 displayName = metadata.fileName,
                 mimeType = metadata.mimeType,
                 size = metadata.fileSize,
                 lastModified = metadata.lastModified
             )
-            
+
             if (factoryResult.isSuccess) {
                 val doc = factoryResult.getOrThrow()
                 currentDocument = doc
                 _state.value = DocumentState.Ready(doc)
-                logger.i(TAG, "loadDocument: Success creating document ${doc.displayName}")
+                logger.i(TAG, "loadDocument: Step 2 SUCCESS | doc=${doc.displayName} " +
+                    "| type=${doc.documentType} | docUri=${doc.uri}")
                 Result.success(doc)
             } else {
                 val exception = factoryResult.exceptionOrNull()!!
-                val error = (exception as? AppErrorException)?.error ?: com.ayanpandey.blink.core.common.error.AppError.UnknownError(exception)
+                val error = (exception as? AppErrorException)?.error
+                    ?: com.ayanpandey.blink.core.common.error.AppError.UnknownError(exception)
+                logger.e(TAG, "loadDocument: Step 2 FAILED (factory) | error=$error " +
+                    "| exception=${exception.message}")
                 _state.value = DocumentState.Error(error)
                 Result.failure(exception)
             }
         } catch (e: Exception) {
-            logger.e(TAG, "Failed to get FileDescriptor", e)
-            val error = com.ayanpandey.blink.core.common.error.AppError.FileError.CorruptedUri
+            logger.e(TAG, "loadDocument: Step 2 EXCEPTION | type=${e.javaClass.name} " +
+                "| message=${e.message} | stackTrace=${e.stackTraceToString()}")
+            val error = com.ayanpandey.blink.core.common.error.AppError.UnknownError(e)
             _state.value = DocumentState.Error(error)
-            Result.failure(AppErrorException(error))
-        } finally {
-            try {
-                inputStream.close()
-            } catch (ignored: Exception) {}
+            Result.failure(e)
         }
     }
 
     override fun closeDocument() {
-        logger.d(TAG, "Closing active document: ${currentDocument?.displayName}")
+        logger.d(TAG, "closeDocument: Closing ${currentDocument?.displayName}")
         currentDocument = null
         _state.value = DocumentState.Idle
     }
 
-    @Suppress("UNUSED_VARIABLE")
     override fun reloadDocument() {
-        val uri = currentDocument?.uri ?: return
+        currentDocument?.uri ?: return
         closeDocument()
-        // Reload will be triggered by the screen calling loadDocument(uri) again
     }
 
     override fun getMetadata(): Document? = currentDocument
@@ -100,3 +96,4 @@ class DocumentViewerImpl(
         private const val TAG = "DocumentViewerImpl"
     }
 }
+
