@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.0-alpha] - 2026-06-18
+
+### Added
+- Secure Android file system integration using Storage Access Framework (SAF).
+- Domain-level `DocumentMetadata` data model and `FileResolver` interface.
+- Concrete `FileResolverImpl` in `:core:file` querying display name, file size, last modified timestamp, and resolving whitelisted MIME types/extensions.
+- Manual DI integration through `DomainContainer` interface in `:domain` and `AppContainerImpl` in `:app` to resolve dependencies cleanly.
+- `MainActivity` integration capturing incoming file intents (`ACTION_VIEW`, `ACTION_SEND`, `ACTION_SEND_MULTIPLE`) and passing resolved URIs to the navigation layer.
+- `AndroidManifest.xml` intent-filters registered for PDF, DOC/DOCX, XLS/XLSX, PPT/PPTX, CSV, and TXT files.
+- `HomeScreen` document picker integration using Compose SAF `ActivityResultContracts.OpenDocument` launcher.
+- Verification UI `MetadataScreen` and `MetadataViewModel` in `:feature:home` displaying resolved file parameters.
+- Unit test suite `FileResolverImplTest` utilizing MockK to verify content and file schemes, permission security exceptions, and file type validation.
+
+### Changed
+- Refactored `BlinkApplication` to type cast the manual service locator as `DomainContainer` to prevent core-common circular module dependencies.
+- Added `androidx.activity.compose` dependency to `:feature:home` module for contract launcher access.
+
+### Fixed
+- Android Storage Access Framework (SAF) permission handling to resolve the "Access Denied Error" when opening documents via the File Picker. Persistable read permissions are explicitly taken early, and the `FileResolver` dynamically queries files using the active `Activity` context resolver to properly honor scoped temporary URI permissions.
+
+
+
 ## [0.2.0-alpha] - 2026-06-17
 
 ### Added

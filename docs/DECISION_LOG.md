@@ -57,3 +57,20 @@ This log lists significant architectural decisions made during the design of Bli
 * **Decision**: Define a single unified sealed interface `AppError` in the `:core:common` module.
 * **Reason**: Each format parser generates library-specific exceptions (e.g. POI Exceptions, PDFium JNI errors, standard IOExceptions). Capturing these raw exceptions in the presentation layer leads to bloated, unmaintainable catch blocks. By mapping internal errors to a strict sealed model, we decouple the UI from format-specific exceptions.
 * **Impact**: Core and feature loading layers must map all internal parse and load exceptions to the appropriate sub-types of `AppError` before returning them to ViewModels.
+
+---
+
+## 2026-06-18: Secure Android File System Integration via Storage Access Framework (SAF)
+
+* **Decision**: Access local and external files using Android's Storage Access Framework (SAF) and `ContentResolver` querying display name and size parameters directly.
+* **Reason**: Broad read/write storage permissions (such as `READ_EXTERNAL_STORAGE`) are heavily restricted in modern Android versions, complex to request, and introduce user trust barriers. SAF offers a secure, scoped access mechanism where users grant explicit access to single files through system interfaces or standard application intents.
+* **Impact**: Incoming `content://` and `file://` URIs are handled dynamically. Metadata querying verifies mime-types and extensions against a whitelist before loading file contents. Permission security exceptions or URI resolution failures are mapped directly onto the `AppError` architecture.
+
+---
+
+## 2026-06-18: Persistent URI Permission Acquisition for Storage Access Framework (SAF)
+
+* **Decision**: Explicitly request persistable URI read permissions (`takePersistableUriPermission`) during file picker selection and main activity view intent processing, using appropriate context/activity scopes, AND retrieve the active `Activity` context dynamically instead of the Application context for resolver queries and stream opens.
+* **Reason**: SAF temporary permissions granted to a launched Activity do not automatically propagate to background coroutines running on `Dispatchers.IO` or when accessing the `ContentResolver` using application contexts. By taking persistable read permissions on `content://` URIs immediately upon acquisition, we prevent "Access Denied" `SecurityException` crashes during subsequent background metadata queries and file reads. Furthermore, accessing the URI via the active Activity context's ContentResolver guarantees that even if a custom document provider does not support persistable URI permissions, our app still has temporary access to read and query it during the active user session.
+* **Impact**: All content URI entry points (Compose file picker callbacks and intent-based launcher starts) must call `takePersistableUriPermission` with `FLAG_GRANT_READ_URI_PERMISSION`. The file resolver tracks the current active activity via a lifecycle listener and resolves all content URIs using the active Activity's `ContentResolver`.
+

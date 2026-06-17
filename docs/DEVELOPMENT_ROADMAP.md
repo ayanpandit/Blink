@@ -25,7 +25,18 @@ Blink is developed in structured phases to guarantee that performance goals (col
 
 ---
 
-## Phase 2: PDF Integration (High Priority)
+## Phase 2: Android File System Integration
+
+* **Goal**: Implement secure Android file system integration using the Storage Access Framework (SAF) and register Intent Filters.
+* **Completion Criteria**:
+  * `AndroidManifest.xml` intent filters registered for all supported MIME types (PDF, DOC/X, XLS/X, PPT/X, CSV, TXT) and content/file schemes.
+  * Dynamic intent URI reader implemented, capturing file data during creation/interaction.
+  * Local document picker integrated inside HomeScreen.
+  * Safe resolution layer querying metadata and validation whitelisting.
+
+---
+
+## Phase 3: PDF Integration (High Priority)
 
 * **Goal**: Integrate PDFium JNI and implement high-performance PDF loading and rendering.
 * **Completion Criteria**:
@@ -36,7 +47,7 @@ Blink is developed in structured phases to guarantee that performance goals (col
 
 ---
 
-## Phase 3: Office & Text Parsers
+## Phase 4: Office & Text Parsers
 
 * **Goal**: Integrate Apache POI and implement text-based layout and grid parsers for Microsoft Office (Word, Excel, PowerPoint) and text format views (TXT, CSV).
 * **Completion Criteria**:
@@ -44,16 +55,6 @@ Blink is developed in structured phases to guarantee that performance goals (col
   * Layout rendering engine for `.docx` paragraphs and `.pptx` slides.
   * 2D scroll grid renderer for spreadsheets (`.xlsx` and `.csv`).
   * Text word-wrapper container for plain `.txt` files.
-
----
-
-## Phase 4: System Integration & Launch Flows
-
-* **Goal**: Register application intent filters to handle documents from Gmail, WhatsApp, and Telegram. Polish the user transition flows.
-* **Completion Criteria**:
-  * `AndroidManifest.xml` intent filters registered for all supported MIME types.
-  * Dynamic intent URI reader implemented, converting `content://` streams into temporary memory pools.
-  * Navigation rules implemented inside `:app`.
 
 ---
 

@@ -7,6 +7,14 @@ sealed interface AppError {
         data object PermissionDenied : FileError
 
         data object LimitExceeded : FileError
+
+        data object InvalidUri : FileError
+
+        data object MissingUri : FileError
+
+        data object CorruptedUri : FileError
+
+        data object UnsupportedType : FileError
     }
 
     sealed interface ParsingError : AppError {
@@ -19,3 +27,5 @@ sealed interface AppError {
 
     data class UnknownError(val throwable: Throwable) : AppError
 }
+
+class AppErrorException(val error: AppError) : Exception(error.toString())

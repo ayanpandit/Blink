@@ -24,4 +24,8 @@ sealed class Screen(val route: String) {
     data object Text : Screen("text?uri={uri}") {
         fun createRoute(uri: String) = "text?uri=$uri"
     }
+
+    data object Metadata : Screen("metadata?uri={uri}") {
+        fun createRoute(uri: String) = "metadata?uri=$uri"
+    }
 }

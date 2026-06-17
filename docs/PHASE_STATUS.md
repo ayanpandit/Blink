@@ -24,24 +24,24 @@ This file lists the current status of each project development phase.
 
 ---
 
-## Phase 2: PDF Integration
+## Phase 2: Android File System Integration
+* **Status**: `COMPLETED`
+* **Completion Date**: 2026-06-18
+* **Summary**: Implemented Storage Access Framework (SAF) document acquisition. Configured intent-filters for MainActivity in `AndroidManifest.xml` supporting external views/shares (PDF, DOC/X, XLS/X, PPT/X, CSV, TXT) and content/file schemes. Built robust URI resolver querying size, name, extension, and last modified variables. Integrated system doc picker in HomeScreen. Added temporary Metadata preview screen displaying queried fields. All unit tests and static checks compile and run successfully.
+
+---
+
+## Phase 3: PDF Integration
 * **Status**: `NOT_STARTED`
 * **Completion Date**: N/A
 * **Summary**: JNI PDFium setup and Jetpack Compose drawing canvases remain to be implemented.
 
 ---
 
-## Phase 3: Office & Text Parsers
+## Phase 4: Office & Text Parsers
 * **Status**: `NOT_STARTED`
 * **Completion Date**: N/A
 * **Summary**: Apache POI setup, Word layouts, PowerPoint slide decks, CSV grid, and TXT viewer modules remain to be implemented.
-
----
-
-## Phase 4: System Integration & Launch Flows
-* **Status**: `NOT_STARTED`
-* **Completion Date**: N/A
-* **Summary**: Intent handling filters and URI processing tasks remain to be implemented.
 
 ---
 
