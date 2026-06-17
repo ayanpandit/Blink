@@ -90,5 +90,21 @@ This log lists significant architectural decisions made during the design of Bli
 * **Reason**: Standard document URIs returned by SAF document providers contain colons (`:`) and slashes (`/`), e.g. `document/document:16585` (encoded as `document/document%3A16585` by the system). Jetpack Navigation's internal route compilation treats unencoded colons and slashes as route separators or relative schemes, corrupting the parameter value and stripping prefixes (e.g. dropping `document:` and leaving only `16585`). Encapsulating the parameter inside `Uri.encode()` protects all special characters, ensuring the destination receives the exact unmodified original URI.
 * **Impact**: All route generation helper functions inside `Screen` compile routes using `Uri.encode(uri)`.
 
+---
+
+## 2026-06-18: Unified Document Engine Architecture with Domain-Level Contracts
+
+* **Decision**: Define all document viewer/renderer/factory contracts (`DocumentViewer`, `DocumentRenderer`, `DocumentFactory`) in the `:domain:contract` package, with implementations in feature and core modules.
+* **Reason**: Feature modules (`:feature:viewer`) depend on `:domain` but must NOT depend on `:core:file` directly. Placing `DocumentFactory` in `:core:file` created a circular dependency chain where `:feature:viewer` needed `:core:file` imports, but the architectural rule is that feature modules only depend on domain abstractions. By hosting the interface in `:domain:contract`, the implementation in `:core:file` satisfies the contract via constructor injection at the `:app` layer, maintaining clean unidirectional dependency flow.
+* **Impact**: All new document-related contracts must be defined in `:domain:contract`. Implementations are wired through `AppContainerImpl` in `:app` using manual DI.
+
+---
+
+## 2026-06-18: Extension-First Document Type Detection Strategy
+
+* **Decision**: `DocumentFactoryImpl` resolves `DocumentType` by checking the file extension first, falling back to MIME type only when the extension is unrecognized.
+* **Reason**: Android SAF document providers sometimes return generic MIME types (e.g., `application/octet-stream`) for files with known extensions. Extension-based detection provides higher accuracy for common document formats. MIME fallback handles extensionless files shared via messaging apps.
+* **Impact**: Both extension and MIME type mappings must be maintained in sync when adding new supported formats.
+
 
 

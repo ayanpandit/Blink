@@ -42,6 +42,7 @@ fun MetadataScreen(
     uriString: String,
     viewModel: MetadataViewModel,
     onBackClick: () -> Unit,
+    onOpenClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -76,7 +77,10 @@ fun MetadataScreen(
                     CircularProgressIndicator()
                 }
                 is MetadataUiState.Success -> {
-                    MetadataContent(metadata = state.metadata)
+                    MetadataContent(
+                        metadata = state.metadata,
+                        onOpenClick = onOpenClick
+                    )
                 }
                 is MetadataUiState.Error -> {
                     ErrorContent(error = state.error, uriString = uriString, onBackClick = onBackClick)
@@ -87,7 +91,10 @@ fun MetadataScreen(
 }
 
 @Composable
-private fun MetadataContent(metadata: DocumentMetadata) {
+private fun MetadataContent(
+    metadata: DocumentMetadata,
+    onOpenClick: (String) -> Unit,
+) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -98,6 +105,15 @@ private fun MetadataContent(metadata: DocumentMetadata) {
         MetadataItem(label = "Extension", value = metadata.extension.uppercase(Locale.ROOT))
         MetadataItem(label = "Last Modified", value = formatTimestamp(metadata.lastModified))
         MetadataItem(label = "URI", value = metadata.uri)
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(
+            onClick = { onOpenClick(metadata.uri) },
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text("Open in Viewer")
+        }
     }
 }
 

@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.4.0-alpha] - 2026-06-18
+
+### Added
+- Core document engine architecture framework (Phase 3).
+- `DocumentType` enum in `:domain` mapping all 9 supported file categories (PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, TXT, CSV).
+- `Document` data model representing a renderer-independent opened document.
+- `DocumentState` sealed interface (`Idle`, `Loading`, `Ready`, `Error`) for viewer lifecycle state machine.
+- `DocumentViewer` interface defining format-agnostic viewer contract with `StateFlow<DocumentState>`.
+- `DocumentRenderer` interface defining base renderer contract with `supportedType` and `name`.
+- `DocumentFactory` interface in `:domain:contract` for mapping file attributes to `Document` models.
+- `DocumentFactoryImpl` in `:core:file` implementing type detection via extension-first, MIME-fallback strategy and whitelist validation.
+- `DocumentError` sealed interface extending `AppError` with `UnsupportedDocument`, `CorruptedDocument`, `DocumentNotFound`, `DocumentPermissionDenied`, and `DocumentParsing` subtypes.
+- New `:feature:viewer` Compose module with `DocumentViewerImpl`, `ViewerViewModel`, and placeholder `ViewerScreen`.
+- `Viewer` navigation route in `:core:navigation` with URL-encoded URI parameter.
+- "Open in Viewer" button on `MetadataScreen` navigating to the generic viewer placeholder.
+- Unit test suites: `DocumentFactoryImplTest` (3 tests) and `DocumentViewerImplTest` (5 tests).
+- `kotlinx-coroutines-test` dependency added to version catalog.
+
+### Changed
+- Upgraded app versioning to `versionCode = 5` and `versionName = "1.0.4"`.
+- Moved `DocumentFactory` interface from `:core:file` to `:domain:contract` to avoid circular module dependencies.
+
 ## [0.3.2-alpha] - 2026-06-18
 
 ### Fixed

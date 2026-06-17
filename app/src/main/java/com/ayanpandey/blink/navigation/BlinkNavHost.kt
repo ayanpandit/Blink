@@ -89,6 +89,26 @@ fun BlinkNavHost(
                 uriString = uri,
                 viewModel = viewModel,
                 onBackClick = { navController.popBackStack() },
+                onOpenClick = { targetUri ->
+                    navController.navigate(Screen.Viewer.createRoute(targetUri))
+                }
+            )
+        }
+        composable(
+            route = Screen.Viewer.route,
+            arguments = listOf(navArgument("uri") { type = NavType.StringType }),
+        ) { backStackEntry ->
+            val uri = backStackEntry.arguments?.getString("uri") ?: ""
+            val viewModel = androidx.lifecycle.viewmodel.compose.viewModel {
+                com.ayanpandey.blink.feature.viewer.ViewerViewModel(
+                    appContainer.documentViewer,
+                    emptyList() // Renderers list will be populated in subsequent phases
+                )
+            }
+            com.ayanpandey.blink.feature.viewer.ViewerScreen(
+                uriString = uri,
+                viewModel = viewModel,
+                onBackClick = { navController.popBackStack() }
             )
         }
     }

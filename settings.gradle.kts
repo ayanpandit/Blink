@@ -38,3 +38,5 @@ include(":feature:word")
 include(":feature:excel")
 include(":feature:ppt")
 include(":feature:text")
+include(":feature:viewer")
+

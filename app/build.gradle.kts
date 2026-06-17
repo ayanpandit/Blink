@@ -11,8 +11,8 @@ android {
         applicationId = "com.ayanpandey.blink"
         minSdk = 26
         targetSdk = 34
-        versionCode = 4
-        versionName = "1.0.3"
+        versionCode = 5
+        versionName = "1.0.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -72,6 +72,7 @@ dependencies {
     implementation(project(":feature:excel"))
     implementation(project(":feature:ppt"))
     implementation(project(":feature:text"))
+    implementation(project(":feature:viewer"))
 
     // Libraries
     implementation(platform(libs.androidx.compose.bom))

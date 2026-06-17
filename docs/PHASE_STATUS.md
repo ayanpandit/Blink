@@ -25,16 +25,19 @@ This file lists the current status of each project development phase.
 ---
 
 ## Phase 2: Android File System Integration
-* **Status**: `IN_PROGRESS`
-* **Completion Date**: N/A
-* **Summary**: Implemented Storage Access Framework (SAF) document acquisition. Configured intent-filters for MainActivity in `AndroidManifest.xml` supporting external views/shares (PDF, DOC/X, XLS/X, PPT/X, CSV, TXT) and content/file schemes. Built robust URI resolver querying size, name, extension, and last modified variables. Integrated system doc picker in HomeScreen. Added temporary Metadata preview screen displaying queried fields. All unit tests and static checks compile and run successfully. Currently resolving storage access permission errors on physical devices.
+* **Status**: `COMPLETED`
+* **Completion Date**: 2026-06-18
+* **Summary**: Implemented Storage Access Framework (SAF) document acquisition. Configured intent-filters for MainActivity in `AndroidManifest.xml` supporting external views/shares (PDF, DOC/X, XLS/X, PPT/X, CSV, TXT) and content/file schemes. Built robust URI resolver querying size, name, extension, and last modified variables. Integrated system doc picker in HomeScreen. Added temporary Metadata preview screen displaying queried fields. All unit tests and static checks compile and run successfully. Resolved storage access permission errors and URI encoding bugs on physical devices.
 
 ---
 
-## Phase 3: PDF Integration
-* **Status**: `NOT_STARTED`
-* **Completion Date**: N/A
-* **Summary**: JNI PDFium setup and Jetpack Compose drawing canvases remain to be implemented.
+## Phase 3: Core Document Engine
+* **Status**: `COMPLETED`
+* **Completion Date**: 2026-06-18
+* **Summary**: Established the unified document architecture framework. Created domain-level type system (`DocumentType` enum), `Document` data model, `DocumentState` sealed interface for lifecycle management, and viewer/renderer/factory contracts (`DocumentViewer`, `DocumentRenderer`, `DocumentFactory`). Extended `AppError` with `DocumentError` hierarchy. Implemented `DocumentFactoryImpl` in `:core:file` for type detection and whitelist validation. Created new `:feature:viewer` module with `DocumentViewerImpl`, `ViewerViewModel`, and placeholder `ViewerScreen`. Wired navigation routes and DI. Added "Open in Viewer" button on `MetadataScreen`. All unit tests pass.
+* **Key Decisions**:
+  - `DocumentFactory` interface placed in `:domain:contract` to avoid circular module dependencies (`:feature:viewer` depends on `:domain`, not `:core:file`).
+  - Empty renderer list passed to `ViewerViewModel` — renderers will be registered in subsequent phases.
 
 ---
 

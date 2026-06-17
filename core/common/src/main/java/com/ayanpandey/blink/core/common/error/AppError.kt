@@ -28,6 +28,14 @@ sealed interface AppError {
         data class GenericError(val detail: String) : ParsingError
     }
 
+    sealed interface DocumentError : AppError {
+        data object UnsupportedDocument : DocumentError
+        data object CorruptedDocument : DocumentError
+        data object DocumentNotFound : DocumentError
+        data class DocumentPermissionDenied(val causeMessage: String? = null, val stackTrace: String? = null) : DocumentError
+        data class DocumentParsing(val detail: String? = null) : DocumentError
+    }
+
     data class UnknownError(val throwable: Throwable) : AppError
 }
 
