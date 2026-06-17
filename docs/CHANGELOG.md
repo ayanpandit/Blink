@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.2-alpha] - 2026-06-18
+
+### Fixed
+- Jetpack Navigation route argument parsing bug where colons in SAF content URIs (e.g. `document:16585`) were parsed incorrectly, resulting in prefix truncation (e.g. `16585`). All routes now explicitly URL-encode URI parameters via `Uri.encode()`, ensuring exact URI strings are preserved.
+
 ## [0.3.1-alpha] - 2026-06-18
 
 ### Added

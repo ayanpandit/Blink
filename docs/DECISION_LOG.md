@@ -82,4 +82,13 @@ This log lists significant architectural decisions made during the design of Bli
 * **Reason**: Permission denials under Android Storage Access Framework (SAF) are highly environment-dependent and often impossible to reproduce on emulators or other devices. Standard stack traces are normally swallowed or logged only in standard logcat which is inaccessible to end users on non-development physical devices. Providing a diagnostic panel directly on-screen with complete details (including copy-paste capability) enables rapid, evidence-based debugging on real physical devices.
 * **Impact**: `PermissionDenied` is changed to a data class storing failure cause and stack traces. `FileResolverImpl` catches `SecurityException` and captures the stack trace string. The `MetadataScreen` displays a detailed copyable debug card when in an error state.
 
+---
+
+## 2026-06-18: URL-Encoding Navigation Parameters for Content URIs
+
+* **Decision**: All string-based file URIs passed as arguments in Jetpack Compose Navigation must be explicitly URL-encoded (using `Uri.encode(uri)`) when constructing navigation routes.
+* **Reason**: Standard document URIs returned by SAF document providers contain colons (`:`) and slashes (`/`), e.g. `document/document:16585` (encoded as `document/document%3A16585` by the system). Jetpack Navigation's internal route compilation treats unencoded colons and slashes as route separators or relative schemes, corrupting the parameter value and stripping prefixes (e.g. dropping `document:` and leaving only `16585`). Encapsulating the parameter inside `Uri.encode()` protects all special characters, ensuring the destination receives the exact unmodified original URI.
+* **Impact**: All route generation helper functions inside `Screen` compile routes using `Uri.encode(uri)`.
+
+
 
