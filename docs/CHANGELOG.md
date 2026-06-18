@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.8] - 2026-06-18
+
+### Changed
+- Refactored all Phase 5 document engines (Word, Excel, PowerPoint, TXT, CSV) to strictly adhere to Clean Architecture error mapping rules:
+  - Created specific `AppError.DocumentError` subclasses: `WordParsingError`, `ExcelParsingError`, `PowerPointParsingError`, `TextParsingError`, and `CsvParsingError`.
+  - Audited error handlers to map raw exceptions to their corresponding domain types and display user-friendly error detail screens.
+- Enhanced telemetry and logging:
+  - Injected `BlinkLogger` into `ViewerViewModel` to log renderer selection transitions.
+  - Logged all state transitions (`LOADING` -> `READY` or `ERROR`) in each of the 5 viewers.
+- Audited and secured resource cleanups:
+  - Wrapped parser processes in robust exception-safe handling to guarantee streams are closed, resources released, and memory buffers evicted correctly.
+- Bumped app versions to `versionCode = 9` and `versionName = "1.0.8"`.
+
 ## [1.0.7] - 2026-06-18
 
 ### Added

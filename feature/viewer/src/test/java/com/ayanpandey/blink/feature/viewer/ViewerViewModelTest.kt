@@ -34,13 +34,14 @@ class ViewerViewModelTest {
         every { name } returns "Word Renderer"
     }
 
+    private val mockLogger = mockk<com.ayanpandey.blink.core.common.logging.BlinkLogger>(relaxed = true)
     private val renderers = listOf(mockPdfRenderer, mockWordRenderer)
     private lateinit var viewModel: ViewerViewModel
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        viewModel = ViewerViewModel(documentViewer, renderers)
+        viewModel = ViewerViewModel(documentViewer, renderers, mockLogger)
     }
 
     @After

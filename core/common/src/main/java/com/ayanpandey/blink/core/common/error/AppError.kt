@@ -34,6 +34,11 @@ sealed interface AppError {
         data object DocumentNotFound : DocumentError
         data class DocumentPermissionDenied(val causeMessage: String? = null, val stackTrace: String? = null) : DocumentError
         data class DocumentParsing(val detail: String? = null) : DocumentError
+        data class WordParsingError(val detail: String? = null, val causeMessage: String? = null) : DocumentError
+        data class ExcelParsingError(val detail: String? = null, val causeMessage: String? = null) : DocumentError
+        data class PowerPointParsingError(val detail: String? = null, val causeMessage: String? = null) : DocumentError
+        data class TextParsingError(val detail: String? = null, val causeMessage: String? = null) : DocumentError
+        data class CsvParsingError(val detail: String? = null, val causeMessage: String? = null) : DocumentError
     }
 
     data class UnknownError(val throwable: Throwable) : AppError

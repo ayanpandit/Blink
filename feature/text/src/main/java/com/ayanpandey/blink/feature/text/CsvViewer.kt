@@ -46,7 +46,7 @@ private const val CELL_HEIGHT_CSV = 36
 private sealed interface CsvViewState {
     data object Loading : CsvViewState
     data class Ready(val rows: List<List<String>>, val maxCols: Int, val truncated: Boolean) : CsvViewState
-    data class Error(val message: String) : CsvViewState
+    data class Error(val error: com.ayanpandey.blink.core.common.error.AppError.DocumentError) : CsvViewState
 }
 
 @Composable
@@ -60,16 +60,30 @@ fun CsvViewer(
 
     LaunchedEffect(document.uri) {
         viewState = CsvViewState.Loading
+        logger.d(TAG, "State transition: LOADING for ${document.displayName}")
         viewState = withContext(Dispatchers.IO) {
             try {
-                val inputStream = fileResolver.openInputStream(document.uri).getOrThrow()
-                val (rows, truncated) = parseCsv(inputStream)
-                val maxCols = rows.maxOfOrNull { it.size } ?: 0
-                logger.d(TAG, "Parsed ${rows.size} rows, $maxCols cols from ${document.displayName}")
-                CsvViewState.Ready(rows, maxCols, truncated)
+                val inputStreamResult = fileResolver.openInputStream(document.uri)
+                if (inputStreamResult.isFailure) {
+                    val ex = inputStreamResult.exceptionOrNull()!!
+                    val error = when (ex) {
+                        is SecurityException -> com.ayanpandey.blink.core.common.error.AppError.DocumentError.DocumentPermissionDenied(ex.message, ex.stackTraceToString())
+                        is com.ayanpandey.blink.core.common.error.AppErrorException -> ex.error as? com.ayanpandey.blink.core.common.error.AppError.DocumentError ?: com.ayanpandey.blink.core.common.error.AppError.DocumentError.CsvParsingError(ex.message)
+                        else -> com.ayanpandey.blink.core.common.error.AppError.DocumentError.DocumentPermissionDenied(ex.message, ex.stackTraceToString())
+                    }
+                    logger.e(TAG, "State transition: ERROR | uri=${document.uri} | error=$error", ex)
+                    CsvViewState.Error(error)
+                } else {
+                    val inputStream = inputStreamResult.getOrThrow()
+                    val (rows, truncated) = parseCsv(inputStream)
+                    val maxCols = rows.maxOfOrNull { it.size } ?: 0
+                    logger.d(TAG, "State transition: READY | Parsed ${rows.size} rows, $maxCols cols from ${document.displayName}")
+                    CsvViewState.Ready(rows, maxCols, truncated)
+                }
             } catch (e: Exception) {
-                logger.e(TAG, "Failed to parse CSV: ${e.message}", e)
-                CsvViewState.Error(e.message ?: "Unknown error")
+                logger.e(TAG, "State transition: ERROR | Failed to parse CSV: ${e.message}", e)
+                val error = com.ayanpandey.blink.core.common.error.AppError.DocumentError.CsvParsingError(e.message, e.stackTraceToString())
+                CsvViewState.Error(error)
             }
         }
     }
@@ -160,7 +174,11 @@ fun CsvViewer(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        state.message,
+                        text = when (val err = state.error) {
+                            is com.ayanpandey.blink.core.common.error.AppError.DocumentError.DocumentPermissionDenied -> "Permission Denied: ${err.causeMessage ?: "No permission"}"
+                            is com.ayanpandey.blink.core.common.error.AppError.DocumentError.CsvParsingError -> "Parsing Error: ${err.detail ?: err.causeMessage ?: "Malformed file"}"
+                            else -> err.toString()
+                        },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

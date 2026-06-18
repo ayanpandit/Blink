@@ -60,7 +60,7 @@ data class SheetData(
 private sealed interface ExcelViewState {
     data object Loading : ExcelViewState
     data class Ready(val sheets: List<SheetData>) : ExcelViewState
-    data class Error(val message: String) : ExcelViewState
+    data class Error(val error: com.ayanpandey.blink.core.common.error.AppError.DocumentError) : ExcelViewState
 }
 
 // ----- Composable -----
@@ -77,15 +77,29 @@ fun ExcelViewer(
 
     LaunchedEffect(document.uri) {
         viewState = ExcelViewState.Loading
+        logger.d(TAG, "State transition: LOADING for ${document.displayName}")
         viewState = withContext(Dispatchers.IO) {
             try {
-                val inputStream = fileResolver.openInputStream(document.uri).getOrThrow()
-                val sheets = parseWorkbook(inputStream)
-                logger.d(TAG, "Parsed ${sheets.size} sheets from ${document.displayName}")
-                ExcelViewState.Ready(sheets)
+                val inputStreamResult = fileResolver.openInputStream(document.uri)
+                if (inputStreamResult.isFailure) {
+                    val ex = inputStreamResult.exceptionOrNull()!!
+                    val error = when (ex) {
+                        is SecurityException -> com.ayanpandey.blink.core.common.error.AppError.DocumentError.DocumentPermissionDenied(ex.message, ex.stackTraceToString())
+                        is com.ayanpandey.blink.core.common.error.AppErrorException -> ex.error as? com.ayanpandey.blink.core.common.error.AppError.DocumentError ?: com.ayanpandey.blink.core.common.error.AppError.DocumentError.ExcelParsingError(ex.message)
+                        else -> com.ayanpandey.blink.core.common.error.AppError.DocumentError.DocumentPermissionDenied(ex.message, ex.stackTraceToString())
+                    }
+                    logger.e(TAG, "State transition: ERROR | uri=${document.uri} | error=$error", ex)
+                    ExcelViewState.Error(error)
+                } else {
+                    val inputStream = inputStreamResult.getOrThrow()
+                    val sheets = parseWorkbook(inputStream)
+                    logger.d(TAG, "State transition: READY | Parsed ${sheets.size} sheets from ${document.displayName}")
+                    ExcelViewState.Ready(sheets)
+                }
             } catch (e: Exception) {
-                logger.e(TAG, "Failed to parse workbook: ${e.message}", e)
-                ExcelViewState.Error(e.message ?: "Unknown parsing error")
+                logger.e(TAG, "State transition: ERROR | Failed to parse Excel document: ${e.message}", e)
+                val error = com.ayanpandey.blink.core.common.error.AppError.DocumentError.ExcelParsingError(e.message, e.stackTraceToString())
+                ExcelViewState.Error(error)
             }
         }
     }
@@ -150,7 +164,11 @@ fun ExcelViewer(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        state.message,
+                        text = when (val err = state.error) {
+                            is com.ayanpandey.blink.core.common.error.AppError.DocumentError.DocumentPermissionDenied -> "Permission Denied: ${err.causeMessage ?: "No permission"}"
+                            is com.ayanpandey.blink.core.common.error.AppError.DocumentError.ExcelParsingError -> "Parsing Error: ${err.detail ?: err.causeMessage ?: "Malformed file"}"
+                            else -> err.toString()
+                        },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

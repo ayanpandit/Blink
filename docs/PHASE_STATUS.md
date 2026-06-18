@@ -53,7 +53,7 @@ This file lists the current status of each project development phase.
 ## Phase 5: Office & Text Parsers
 * **Status**: `COMPLETED`
 * **Completion Date**: 2026-06-18
-* **Summary**: Integrated Apache POI (`androidmsc` fork) for Word (.doc, .docx), Excel (.xls, .xlsx), and PowerPoint (.ppt, .pptx) rendering. Created Compose `LazyColumn` parsers for Word paragraphs, virtualized 2D grid renderers for Excel and CSV, and `LruCache` bitmap slide rendering for PowerPoint. Added native lightweight `.txt` parser. All 5 new renderers (`WordRenderer`, `ExcelRenderer`, `PptRenderer`, `TxtRenderer`, `CsvRenderer`) integrated into `AppContainerImpl`. Version bumped to 1.0.7.
+* **Summary**: Integrated Apache POI (`androidmsc` fork) for Word (.doc, .docx), Excel (.xls, .xlsx), and PowerPoint (.ppt, .pptx) rendering. Created Compose `LazyColumn` parsers for Word paragraphs, virtualized 2D grid renderers for Excel and CSV, and `LruCache` bitmap slide rendering for PowerPoint. Added native lightweight `.txt` parser. All 5 new renderers (`WordRenderer`, `ExcelRenderer`, `PptRenderer`, `TxtRenderer`, `CsvRenderer`) integrated into `AppContainerImpl`. Refactored all loaders to handle custom parser exceptions mapping cleanly to corresponding `AppError.DocumentError` types (e.g. `WordParsingError`, `ExcelParsingError`). Audited all streams for safe closures and logged state transitions using `BlinkLogger`. Version bumped to 1.0.8.
 
 ---
 

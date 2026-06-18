@@ -56,7 +56,7 @@ enum class ParagraphStyle { HEADING1, HEADING2, HEADING3, BODY, CAPTION }
 private sealed interface WordViewState {
     data object Loading : WordViewState
     data class Ready(val blocks: List<WordBlock>) : WordViewState
-    data class Error(val message: String) : WordViewState
+    data class Error(val error: com.ayanpandey.blink.core.common.error.AppError.DocumentError) : WordViewState
 }
 
 // ----- Composable -----
@@ -72,19 +72,33 @@ fun WordViewer(
 
     LaunchedEffect(document.uri) {
         viewState = WordViewState.Loading
+        logger.d(TAG, "State transition: LOADING for ${document.displayName}")
         viewState = withContext(Dispatchers.IO) {
             try {
-                val inputStream = fileResolver.openInputStream(document.uri).getOrThrow()
-                val blocks = when (document.documentType) {
-                    DocumentType.DOCX -> parseDocx(inputStream)
-                    DocumentType.DOC -> parseDoc(inputStream)
-                    else -> parseDocx(inputStream)
+                val inputStreamResult = fileResolver.openInputStream(document.uri)
+                if (inputStreamResult.isFailure) {
+                    val ex = inputStreamResult.exceptionOrNull()!!
+                    val error = when (ex) {
+                        is SecurityException -> com.ayanpandey.blink.core.common.error.AppError.DocumentError.DocumentPermissionDenied(ex.message, ex.stackTraceToString())
+                        is com.ayanpandey.blink.core.common.error.AppErrorException -> ex.error as? com.ayanpandey.blink.core.common.error.AppError.DocumentError ?: com.ayanpandey.blink.core.common.error.AppError.DocumentError.WordParsingError(ex.message)
+                        else -> com.ayanpandey.blink.core.common.error.AppError.DocumentError.DocumentPermissionDenied(ex.message, ex.stackTraceToString())
+                    }
+                    logger.e(TAG, "State transition: ERROR | uri=${document.uri} | error=$error", ex)
+                    WordViewState.Error(error)
+                } else {
+                    val inputStream = inputStreamResult.getOrThrow()
+                    val blocks = when (document.documentType) {
+                        DocumentType.DOCX -> parseDocx(inputStream)
+                        DocumentType.DOC -> parseDoc(inputStream)
+                        else -> parseDocx(inputStream)
+                    }
+                    logger.d(TAG, "State transition: READY | Parsed ${blocks.size} blocks from ${document.displayName}")
+                    WordViewState.Ready(blocks)
                 }
-                logger.d(TAG, "Parsed ${blocks.size} blocks from ${document.displayName}")
-                WordViewState.Ready(blocks)
             } catch (e: Exception) {
-                logger.e(TAG, "Failed to parse document: ${e.message}", e)
-                WordViewState.Error(e.message ?: "Unknown parsing error")
+                logger.e(TAG, "State transition: ERROR | Failed to parse Word document: ${e.message}", e)
+                val error = com.ayanpandey.blink.core.common.error.AppError.DocumentError.WordParsingError(e.message, e.stackTraceToString())
+                WordViewState.Error(error)
             }
         }
     }
@@ -114,7 +128,11 @@ fun WordViewer(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = state.message,
+                        text = when (val err = state.error) {
+                            is com.ayanpandey.blink.core.common.error.AppError.DocumentError.DocumentPermissionDenied -> "Permission Denied: ${err.causeMessage ?: "No permission"}"
+                            is com.ayanpandey.blink.core.common.error.AppError.DocumentError.WordParsingError -> "Parsing Error: ${err.detail ?: err.causeMessage ?: "Malformed file"}"
+                            else -> err.toString()
+                        },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

@@ -63,7 +63,7 @@ data class SlideInfo(val index: Int, val aspectRatio: Float)
 private sealed interface PptViewState {
     data object Loading : PptViewState
     data class Ready(val slides: List<SlideInfo>, val slideCount: Int) : PptViewState
-    data class Error(val message: String) : PptViewState
+    data class Error(val error: com.ayanpandey.blink.core.common.error.AppError.DocumentError) : PptViewState
 }
 
 // ----- Composable -----
@@ -84,13 +84,19 @@ fun PptViewer(
         { pageIndex ->
             bitmapCache.get(pageIndex) ?: withContext(Dispatchers.IO) {
                 try {
-                    val inputStream = fileResolver.openInputStream(document.uri).getOrThrow()
-                    val bitmap = when (document.documentType) {
-                        DocumentType.PPTX -> renderPptxSlide(inputStream, pageIndex, PPT_RENDER_WIDTH)
-                        DocumentType.PPT -> renderPptSlide(inputStream, pageIndex, PPT_RENDER_WIDTH)
-                        else -> renderPptxSlide(inputStream, pageIndex, PPT_RENDER_WIDTH)
+                    val inputStreamResult = fileResolver.openInputStream(document.uri)
+                    if (inputStreamResult.isFailure) {
+                        logger.e(TAG, "Failed to resolve stream for slide rendering: ${inputStreamResult.exceptionOrNull()?.message}")
+                        null
+                    } else {
+                        val inputStream = inputStreamResult.getOrThrow()
+                        val bitmap = when (document.documentType) {
+                            DocumentType.PPTX -> renderPptxSlide(inputStream, pageIndex, PPT_RENDER_WIDTH)
+                            DocumentType.PPT -> renderPptSlide(inputStream, pageIndex, PPT_RENDER_WIDTH)
+                            else -> renderPptxSlide(inputStream, pageIndex, PPT_RENDER_WIDTH)
+                        }
+                        bitmap?.also { bitmapCache.put(pageIndex, it) }
                     }
-                    bitmap?.also { bitmapCache.put(pageIndex, it) }
                 } catch (e: Exception) {
                     logger.e(TAG, "Failed to render slide $pageIndex: ${e.message}", e)
                     null
@@ -101,19 +107,33 @@ fun PptViewer(
 
     LaunchedEffect(document.uri) {
         viewState = PptViewState.Loading
+        logger.d(TAG, "State transition: LOADING for ${document.displayName}")
         viewState = withContext(Dispatchers.IO) {
             try {
-                val inputStream = fileResolver.openInputStream(document.uri).getOrThrow()
-                val slides = when (document.documentType) {
-                    DocumentType.PPTX -> getPptxSlideInfos(inputStream, PPT_RENDER_WIDTH)
-                    DocumentType.PPT -> getPptSlideInfos(inputStream, PPT_RENDER_WIDTH)
-                    else -> getPptxSlideInfos(inputStream, PPT_RENDER_WIDTH)
+                val inputStreamResult = fileResolver.openInputStream(document.uri)
+                if (inputStreamResult.isFailure) {
+                    val ex = inputStreamResult.exceptionOrNull()!!
+                    val error = when (ex) {
+                        is SecurityException -> com.ayanpandey.blink.core.common.error.AppError.DocumentError.DocumentPermissionDenied(ex.message, ex.stackTraceToString())
+                        is com.ayanpandey.blink.core.common.error.AppErrorException -> ex.error as? com.ayanpandey.blink.core.common.error.AppError.DocumentError ?: com.ayanpandey.blink.core.common.error.AppError.DocumentError.PowerPointParsingError(ex.message)
+                        else -> com.ayanpandey.blink.core.common.error.AppError.DocumentError.DocumentPermissionDenied(ex.message, ex.stackTraceToString())
+                    }
+                    logger.e(TAG, "State transition: ERROR | uri=${document.uri} | error=$error", ex)
+                    PptViewState.Error(error)
+                } else {
+                    val inputStream = inputStreamResult.getOrThrow()
+                    val slides = when (document.documentType) {
+                        DocumentType.PPTX -> getPptxSlideInfos(inputStream, PPT_RENDER_WIDTH)
+                        DocumentType.PPT -> getPptSlideInfos(inputStream, PPT_RENDER_WIDTH)
+                        else -> getPptxSlideInfos(inputStream, PPT_RENDER_WIDTH)
+                    }
+                    logger.d(TAG, "State transition: READY | Found ${slides.size} slides in ${document.displayName}")
+                    PptViewState.Ready(slides, slides.size)
                 }
-                logger.d(TAG, "Found ${slides.size} slides in ${document.displayName}")
-                PptViewState.Ready(slides, slides.size)
             } catch (e: Exception) {
-                logger.e(TAG, "Failed to open presentation: ${e.message}", e)
-                PptViewState.Error(e.message ?: "Unknown error")
+                logger.e(TAG, "State transition: ERROR | Failed to open presentation: ${e.message}", e)
+                val error = com.ayanpandey.blink.core.common.error.AppError.DocumentError.PowerPointParsingError(e.message, e.stackTraceToString())
+                PptViewState.Error(error)
             }
         }
     }
@@ -198,7 +218,11 @@ fun PptViewer(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        state.message,
+                        text = when (val err = state.error) {
+                            is com.ayanpandey.blink.core.common.error.AppError.DocumentError.DocumentPermissionDenied -> "Permission Denied: ${err.causeMessage ?: "No permission"}"
+                            is com.ayanpandey.blink.core.common.error.AppError.DocumentError.PowerPointParsingError -> "Parsing Error: ${err.detail ?: err.causeMessage ?: "Malformed file"}"
+                            else -> err.toString()
+                        },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

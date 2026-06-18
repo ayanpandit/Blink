@@ -43,7 +43,7 @@ private const val MAX_LINES_PREVIEW = 50_000
 private sealed interface TxtViewState {
     data object Loading : TxtViewState
     data class Ready(val lines: List<String>, val truncated: Boolean) : TxtViewState
-    data class Error(val message: String) : TxtViewState
+    data class Error(val error: com.ayanpandey.blink.core.common.error.AppError.DocumentError) : TxtViewState
 }
 
 @Composable
@@ -57,26 +57,40 @@ fun TxtViewer(
 
     LaunchedEffect(document.uri) {
         viewState = TxtViewState.Loading
+        logger.d(TAG, "State transition: LOADING for ${document.displayName}")
         viewState = withContext(Dispatchers.IO) {
             try {
-                val inputStream = fileResolver.openInputStream(document.uri).getOrThrow()
-                val reader = inputStream.bufferedReader(Charsets.UTF_8)
-                val lines = mutableListOf<String>()
-                var truncated = false
-                reader.useLines { seq ->
-                    for (line in seq) {
-                        if (lines.size >= MAX_LINES_PREVIEW) {
-                            truncated = true
-                            break
-                        }
-                        lines.add(line)
+                val inputStreamResult = fileResolver.openInputStream(document.uri)
+                if (inputStreamResult.isFailure) {
+                    val ex = inputStreamResult.exceptionOrNull()!!
+                    val error = when (ex) {
+                        is SecurityException -> com.ayanpandey.blink.core.common.error.AppError.DocumentError.DocumentPermissionDenied(ex.message, ex.stackTraceToString())
+                        is com.ayanpandey.blink.core.common.error.AppErrorException -> ex.error as? com.ayanpandey.blink.core.common.error.AppError.DocumentError ?: com.ayanpandey.blink.core.common.error.AppError.DocumentError.TextParsingError(ex.message)
+                        else -> com.ayanpandey.blink.core.common.error.AppError.DocumentError.DocumentPermissionDenied(ex.message, ex.stackTraceToString())
                     }
+                    logger.e(TAG, "State transition: ERROR | uri=${document.uri} | error=$error", ex)
+                    TxtViewState.Error(error)
+                } else {
+                    val inputStream = inputStreamResult.getOrThrow()
+                    val reader = inputStream.bufferedReader(Charsets.UTF_8)
+                    val lines = mutableListOf<String>()
+                    var truncated = false
+                    reader.useLines { seq ->
+                        for (line in seq) {
+                            if (lines.size >= MAX_LINES_PREVIEW) {
+                                truncated = true
+                                break
+                            }
+                            lines.add(line)
+                        }
+                    }
+                    logger.d(TAG, "State transition: READY | Read ${lines.size} lines from ${document.displayName} (truncated=$truncated)")
+                    TxtViewState.Ready(lines, truncated)
                 }
-                logger.d(TAG, "Read ${lines.size} lines from ${document.displayName} (truncated=$truncated)")
-                TxtViewState.Ready(lines, truncated)
             } catch (e: Exception) {
-                logger.e(TAG, "Failed to read text file: ${e.message}", e)
-                TxtViewState.Error(e.message ?: "Unknown error")
+                logger.e(TAG, "State transition: ERROR | Failed to read text file: ${e.message}", e)
+                val error = com.ayanpandey.blink.core.common.error.AppError.DocumentError.TextParsingError(e.message, e.stackTraceToString())
+                TxtViewState.Error(error)
             }
         }
     }
@@ -148,7 +162,11 @@ fun TxtViewer(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        state.message,
+                        text = when (val err = state.error) {
+                            is com.ayanpandey.blink.core.common.error.AppError.DocumentError.DocumentPermissionDenied -> "Permission Denied: ${err.causeMessage ?: "No permission"}"
+                            is com.ayanpandey.blink.core.common.error.AppError.DocumentError.TextParsingError -> "Parsing Error: ${err.detail ?: err.causeMessage ?: "Malformed file"}"
+                            else -> err.toString()
+                        },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

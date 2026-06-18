@@ -11,7 +11,8 @@ import kotlinx.coroutines.launch
 
 class ViewerViewModel(
     private val documentViewer: DocumentViewer,
-    private val renderers: List<DocumentRenderer>
+    private val renderers: List<DocumentRenderer>,
+    private val logger: com.ayanpandey.blink.core.common.logging.BlinkLogger,
 ) : ViewModel() {
     val state: StateFlow<DocumentState> = documentViewer.state
 
@@ -27,7 +28,9 @@ class ViewerViewModel(
     }
 
     fun getRenderer(docType: DocumentType): DocumentRenderer? {
-        return renderers.find { it.supportedType == docType }
+        val renderer = renderers.find { it.supportedType == docType }
+        logger.d("ViewerViewModel", "Renderer Selection: resolved '${renderer?.name}' for document type '$docType'")
+        return renderer
     }
 
 
