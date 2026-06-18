@@ -1,3 +1,5 @@
+import java.net.URLClassLoader
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -98,4 +100,51 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+}
+
+tasks.register("generateAppIcons") {
+    group = "build"
+    description = "Generates launcher, adaptive, and notification icons from root icon.png"
+    doLast {
+        val rootDir = project.rootDir
+        val srcFile = File(rootDir, "icon.png")
+        if (!srcFile.exists()) {
+            throw GradleException("Source icon.png not found in repository root!")
+        }
+        val resDir = File(projectDir, "src/main/res")
+        val generatorJava = File(rootDir, "tools/IconGenerator.java")
+        val classesDir = File(layout.buildDirectory.get().asFile, "iconGeneratorClasses")
+        classesDir.mkdirs()
+
+        // Compile IconGenerator.java using Java Compiler API
+        val compiler = javax.tools.ToolProvider.getSystemJavaCompiler()
+        if (compiler == null) {
+            throw GradleException("System Java Compiler (javac) is not available! Make sure you are running Gradle on a JDK.")
+        }
+        val fileManager = compiler.getStandardFileManager(null, null, null)
+        val compilationUnits = fileManager.getJavaFileObjectsFromFiles(listOf(generatorJava))
+        val options = listOf("-d", classesDir.absolutePath)
+        val task = compiler.getTask(null, fileManager, null, options, null, compilationUnits)
+        val success = task.call()
+        fileManager.close()
+        if (!success) {
+            throw GradleException("Failed to compile tools/IconGenerator.java!")
+        }
+
+        // Run IconGenerator using ClassLoader
+        logger.lifecycle("Running IconGenerator...")
+        val classLoader = URLClassLoader(
+            arrayOf(classesDir.toURI().toURL()),
+            ClassLoader.getSystemClassLoader()
+        )
+        val mainClass = classLoader.loadClass("IconGenerator")
+        val mainMethod = mainClass.getMethod("main", Array<String>::class.java)
+        mainMethod.invoke(null, arrayOf(srcFile.absolutePath, resDir.absolutePath) as Any)
+        logger.lifecycle("Successfully generated all icons from root icon.png")
+    }
+}
+
+// Hook it to preBuild
+tasks.named("preBuild") {
+    dependsOn("generateAppIcons")
 }

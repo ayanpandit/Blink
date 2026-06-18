@@ -75,6 +75,8 @@ fun PdfViewer(
     document: Document,
     fileResolver: FileResolver,
     logger: BlinkLogger,
+    initialPage: Int = 1,
+    onPageChanged: (Int) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -178,82 +180,62 @@ fun PdfViewer(
     }
 
     // Render States
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = document.displayName,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    titleContentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            )
-        },
+    Box(
         modifier = modifier
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .background(MaterialTheme.colorScheme.background),
-            contentAlignment = Alignment.Center
-        ) {
-            when (val currentLoadingState = loadingState) {
-                is PdfLoadingState.Loading -> {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        CircularProgressIndicator()
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "Loading PDF pages...",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onBackground
-                        )
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+        contentAlignment = Alignment.Center
+    ) {
+        when (val currentLoadingState = loadingState) {
+            is PdfLoadingState.Loading -> {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    CircularProgressIndicator()
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Loading PDF pages...",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+            }
+            is PdfLoadingState.Ready -> {
+                if (pageCount > 0 && pdfDocument != null && pdfiumCore != null) {
+                    PdfPagesViewport(
+                        pdfiumCore = pdfiumCore!!,
+                        pdfDocument = pdfDocument!!,
+                        pageCount = pageCount,
+                        pageDimensions = pageDimensions,
+                        cache = pageCache,
+                        initialPage = initialPage,
+                        onPageChanged = onPageChanged,
+                        logger = logger
+                    )
+                } else {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text("This PDF document is empty.")
                     }
                 }
-                is PdfLoadingState.Ready -> {
-                    if (pageCount > 0 && pdfDocument != null && pdfiumCore != null) {
-                        PdfPagesViewport(
-                            pdfiumCore = pdfiumCore!!,
-                            pdfDocument = pdfDocument!!,
-                            pageCount = pageCount,
-                            pageDimensions = pageDimensions,
-                            cache = pageCache,
-                            logger = logger
-                        )
-                    } else {
-                        Box(contentAlignment = Alignment.Center) {
-                            Text("This PDF document is empty.")
-                        }
-                    }
-                }
-                is PdfLoadingState.Error -> {
-                    Column(
-                        modifier = Modifier.fillMaxWidth().padding(24.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "Failed to render PDF",
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.headlineSmall
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "Error: ${currentLoadingState.error}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onBackground
-                        )
-                    }
+            }
+            is PdfLoadingState.Error -> {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Failed to render PDF",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.headlineSmall
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Error: ${currentLoadingState.error}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
                 }
             }
         }
@@ -267,6 +249,8 @@ private fun PdfPagesViewport(
     pageCount: Int,
     pageDimensions: List<PageSize>,
     cache: LruCache<Int, Bitmap>,
+    initialPage: Int,
+    onPageChanged: (Int) -> Unit,
     logger: BlinkLogger
 ) {
     // Zoom and pan transform states
@@ -274,9 +258,15 @@ private fun PdfPagesViewport(
     var offsetX by remember { mutableFloatStateOf(0f) }
     var offsetY by remember { mutableFloatStateOf(0f) }
 
-    val lazyListState = rememberLazyListState()
+    val lazyListState = rememberLazyListState(initialFirstVisibleItemIndex = (initialPage - 1).coerceAtLeast(0))
     val firstVisiblePage by remember {
         derivedStateOf { lazyListState.firstVisibleItemIndex + 1 }
+    }
+
+    LaunchedEffect(firstVisiblePage) {
+        if (pageCount > 0) {
+            onPageChanged(firstVisiblePage)
+        }
     }
 
     BoxWithConstraints(

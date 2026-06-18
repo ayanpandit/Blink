@@ -290,12 +290,19 @@ private fun renderPptxSlide(inputStream: java.io.InputStream, slideIndex: Int, r
         val aspectRatio = if (pageSize.height > 0) pageSize.width.toFloat() / pageSize.height.toFloat() else 16f / 9f
         val renderHeight = (renderWidth / aspectRatio).toInt()
 
+        val img = java.awt.image.BufferedImage(renderWidth, renderHeight, java.awt.image.BufferedImage.TYPE_INT_ARGB)
+        val g2d = img.createGraphics()
+        g2d.color = java.awt.Color.WHITE
+        g2d.fillRect(0, 0, renderWidth, renderHeight)
+        val scale = renderWidth.toDouble() / pageSize.width.toDouble()
+        g2d.scale(scale, scale)
+        slide.draw(g2d)
+        g2d.dispose()
+
+        val pixels = IntArray(renderWidth * renderHeight)
+        img.getRGB(0, 0, renderWidth, renderHeight, pixels, 0, renderWidth)
         val bitmap = Bitmap.createBitmap(renderWidth, renderHeight, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bitmap)
-        canvas.drawColor(Color.WHITE)
-        val scale = renderWidth.toFloat() / pageSize.width.toFloat()
-        canvas.scale(scale, scale)
-        slide.draw(com.android.internal.awt.AndroidGraphics2D(canvas))
+        bitmap.setPixels(pixels, 0, renderWidth, 0, 0, renderWidth, renderHeight)
         bitmap
     }
 }
@@ -321,12 +328,19 @@ private fun renderPptSlide(inputStream: java.io.InputStream, slideIndex: Int, re
         val aspectRatio = if (pageSize.height > 0) pageSize.width.toFloat() / pageSize.height.toFloat() else 4f / 3f
         val renderHeight = (renderWidth / aspectRatio).toInt()
 
+        val img = java.awt.image.BufferedImage(renderWidth, renderHeight, java.awt.image.BufferedImage.TYPE_INT_ARGB)
+        val g2d = img.createGraphics()
+        g2d.color = java.awt.Color.WHITE
+        g2d.fillRect(0, 0, renderWidth, renderHeight)
+        val scale = renderWidth.toDouble() / pageSize.width.toDouble()
+        g2d.scale(scale, scale)
+        slide.draw(g2d)
+        g2d.dispose()
+
+        val pixels = IntArray(renderWidth * renderHeight)
+        img.getRGB(0, 0, renderWidth, renderHeight, pixels, 0, renderWidth)
         val bitmap = Bitmap.createBitmap(renderWidth, renderHeight, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bitmap)
-        canvas.drawColor(Color.WHITE)
-        val scale = renderWidth.toFloat() / pageSize.width.toFloat()
-        canvas.scale(scale, scale)
-        slide.draw(com.android.internal.awt.AndroidGraphics2D(canvas))
+        bitmap.setPixels(pixels, 0, renderWidth, 0, 0, renderWidth, renderHeight)
         bitmap
     }
 }

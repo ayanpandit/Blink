@@ -55,7 +55,7 @@ poi = { group = "org.apache.poi", name = "poi", version.ref = "poi" }
 poi-ooxml = { group = "org.apache.poi", name = "poi-ooxml", version.ref = "poi" }
 poi-scratchpad = { group = "org.apache.poi", name = "poi-scratchpad", version.ref = "poi" }
 aalto-xml = { group = "com.fasterxml", name = "aalto-xml", version.ref = "aaltoXml" }
-android-awt = { group = "com.github.andob", name = "android-awt", version = "1.0.1" }
+android-awt = { group = "ro.andob.androidawt", name = "androidawt", version = "1.0.4" }
 
 
 [plugins]

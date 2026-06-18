@@ -1,5 +1,6 @@
 package com.ayanpandey.blink
 
+import androidx.activity.enableEdgeToEdge
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -22,6 +23,7 @@ class MainActivity : ComponentActivity() {
     private var intentUri = mutableStateOf<String?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
         val appContainer = (application as BlinkApplication).container
@@ -36,8 +38,8 @@ class MainActivity : ComponentActivity() {
                 val currentUri by intentUri
                 LaunchedEffect(currentUri) {
                     currentUri?.let { uri ->
-                        appContainer.logger.i(TAG, "Navigating to metadata screen for intent URI: $uri")
-                        navController.navigate(Screen.Metadata.createRoute(uri))
+                        appContainer.logger.i(TAG, "Navigating directly to viewer screen for intent URI: $uri")
+                        navController.navigate(Screen.Viewer.createRoute(uri))
                         intentUri.value = null
                     }
                 }

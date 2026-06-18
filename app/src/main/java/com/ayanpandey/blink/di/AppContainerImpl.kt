@@ -44,6 +44,10 @@ class AppContainerImpl(private val context: Context) : DomainContainer {
         DocumentViewerImpl(fileResolver, documentFactory, logger)
     }
 
+    override val documentRepository: com.ayanpandey.blink.domain.repository.DocumentRepository by lazy {
+        com.ayanpandey.blink.core.file.repository.DocumentRepositoryImpl(context, logger)
+    }
+
     override val renderers: List<com.ayanpandey.blink.domain.contract.DocumentRenderer> by lazy {
         listOf(
             PdfRenderer(fileResolver, logger),

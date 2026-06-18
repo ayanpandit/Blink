@@ -223,7 +223,7 @@ private fun parseDocx(inputStream: java.io.InputStream): List<WordBlock> {
                     if (run.isItalic) addStyle(SpanStyle(fontStyle = FontStyle.Italic), start, end)
                     if (run.isStrikeThrough) addStyle(SpanStyle(textDecoration = TextDecoration.LineThrough), start, end)
                     @Suppress("DEPRECATION")
-                    if (run.underline) addStyle(SpanStyle(textDecoration = TextDecoration.Underline), start, end)
+                    if (run.underline != null && run.underline != org.apache.poi.xwpf.usermodel.UnderlinePatterns.NONE) addStyle(SpanStyle(textDecoration = TextDecoration.Underline), start, end)
                 }
             }
             blocks.add(WordBlock.Paragraph(annotated, paragraphStyle))
@@ -239,7 +239,7 @@ private fun parseDoc(inputStream: java.io.InputStream): List<WordBlock> {
         for (i in 0 until range.numParagraphs()) {
             val para = range.getParagraph(i)
             val text = para.text().trimEnd('\r', '\u0000')
-            val styleIndex = para.styleIndex
+            val styleIndex = para.styleIndex.toInt()
             val paragraphStyle = when {
                 styleIndex == 1 -> ParagraphStyle.HEADING1
                 styleIndex == 2 -> ParagraphStyle.HEADING2

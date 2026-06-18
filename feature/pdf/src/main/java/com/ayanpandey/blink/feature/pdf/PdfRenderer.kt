@@ -25,4 +25,21 @@ class PdfRenderer(
             modifier = modifier
         )
     }
+
+    @Composable
+    override fun Render(
+        document: Document,
+        initialPosition: Int,
+        onPositionChanged: (Int) -> Unit,
+        modifier: Modifier
+    ) {
+        PdfViewer(
+            document = document,
+            fileResolver = fileResolver,
+            logger = logger,
+            initialPage = if (initialPosition > 0) initialPosition else 1,
+            onPageChanged = onPositionChanged,
+            modifier = modifier
+        )
+    }
 }

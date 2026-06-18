@@ -32,9 +32,15 @@ fun BlinkNavHost(
         modifier = modifier,
     ) {
         composable(Screen.Home.route) {
+            val homeViewModel = androidx.lifecycle.viewmodel.compose.viewModel {
+                com.ayanpandey.blink.feature.home.HomeViewModel(
+                    appContainer.documentRepository
+                )
+            }
             HomeScreen(
+                viewModel = homeViewModel,
                 onNavigateToScanner = { navController.navigate(Screen.Scanner.route) },
-                onFileSelected = { uri -> navController.navigate(Screen.Metadata.createRoute(uri)) },
+                onFileSelected = { uri -> navController.navigate(Screen.Viewer.createRoute(uri)) },
                 logger = appContainer.logger,
             )
         }
@@ -111,6 +117,7 @@ fun BlinkNavHost(
                 com.ayanpandey.blink.feature.viewer.ViewerViewModel(
                     appContainer.documentViewer,
                     appContainer.renderers,
+                    appContainer.documentRepository,
                     appContainer.logger
                 )
             }

@@ -139,3 +139,35 @@ This log lists significant architectural decisions made during the design of Bli
  * **Decision**: Add `openFileDescriptor` function to the `FileResolver` interface in `:domain`, implemented in `:core:file` using standard ContentResolver APIs.
  * **Reason**: PDFium JNI rendering relies on a native `ParcelFileDescriptor` to avoid loading entire files into memory. Moving this to `FileResolver` allows format renderers to obtain descriptors safely using activity-scoped content resolvers and permission tracking logic.
  * **Impact**: `FileResolver` contract extended. `PdfViewer` fetches file descriptors off the main thread when loading pages.
+
+---
+
+## 2026-06-18: Direct Launch Navigation Flow
+
+* **Decision**: Remove the intermediate metadata screen and open files directly in the reader view upon selection or intent ingestion.
+* **Reason**: Users expect documents to open instantly. Having a metadata screen adds unnecessary cognitive friction and delays. 
+* **Impact**: Incoming viewing intents in `MainActivity` and file picks on `HomeScreen` route directly to `Screen.Viewer`. Metadata is relocated to a "Document Details" overlay in the reader's overflow menu.
+
+---
+
+## 2026-06-18: Dynamic Asset Generation via Standalone Java Execution
+
+* **Decision**: Compile and run a standalone Java utility (`tools/IconGenerator.java`) inside the Gradle `generateAppIcons` task using `javax.tools.ToolProvider` and `URLClassLoader`.
+* **Reason**: Kotlin Gradle DSL build scripts run in a restricted JVM classpath where AWT desktop packages (e.g. `java.awt.image.BufferedImage`, `javax.imageio.ImageIO`) are inaccessible. Compiling the task inside a separate loader classpath bypasses these script compilation checks, allowing automated icon scaling from a single root `/icon.png` resource.
+* **Impact**: Standardizes adaptive, legacy, round, and monochrome icon rendering at build time with zero duplicate assets in git.
+
+---
+
+## 2026-06-18: Floating Reader Overlay with Non-Intrusive Auto-Hide Timer
+
+* **Decision**: Implement the top bar and dropdown options as floating overlays, toggled on viewport single-taps, with a 3-second auto-hide timer.
+* **Reason**: Provides a 100% immersive reading viewport. Pausing the auto-hide timer when a dropdown menu or dialog is open prevents layout elements from disappearing during user settings adjustments.
+* **Impact**: Controlled via state-linked LaunchedEffects in `ViewerScreen.kt`.
+
+---
+
+## 2026-06-18: Lightweight JSON Indices for Instant Search
+
+* **Decision**: Persist scanned document locations and index lists as lightweight JSON flat files rather than SQLite/Room tables.
+* **Reason**: Avoids the filesystem locks, schema compilations, and initialization costs of SQLite. Instant query filtering runs in memory over flat arrays in <5ms, satisfying the <100ms search constraint and keeping cold startup under 500ms.
+* **Impact**: Handled seamlessly inside `DocumentRepositoryImpl.kt` using `org.json` utilities.

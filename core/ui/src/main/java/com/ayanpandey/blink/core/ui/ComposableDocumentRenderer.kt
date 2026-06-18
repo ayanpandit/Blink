@@ -11,4 +11,14 @@ interface ComposableDocumentRenderer : DocumentRenderer {
         document: Document,
         modifier: Modifier
     )
+
+    @Composable
+    fun Render(
+        document: Document,
+        initialPosition: Int,
+        onPositionChanged: (Int) -> Unit,
+        modifier: Modifier
+    ) {
+        Render(document, modifier)
+    }
 }
