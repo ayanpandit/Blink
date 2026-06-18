@@ -53,7 +53,12 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.kotlinx.coroutines.core)
-    implementation(libs.poi.android)
+    implementation(libs.poi)
+    implementation(libs.poi.ooxml)
+    implementation(libs.poi.scratchpad)
+    implementation(libs.aalto.xml) {
+        exclude(group = "stax", module = "stax-api")
+    }
 
     testImplementation(libs.junit)
     testImplementation(libs.mockk)

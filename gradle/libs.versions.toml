@@ -15,7 +15,8 @@ mockk = "1.13.9"
 androidxTestExtJunit = "1.1.5"
 espressoCore = "3.5.1"
 pdfium = "1.9.2"
-poiAndroid = "0.0.15"
+poi = "5.2.3"
+aaltoXml = "1.3.3"
 
 
 [libraries]
@@ -50,7 +51,10 @@ androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-co
 androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 pdfium-android = { group = "com.github.mhiew", name = "pdfium-android", version.ref = "pdfium" }
-poi-android = { group = "com.github.BigBadaboom", name = "androidmsc", version.ref = "poiAndroid" }
+poi = { group = "org.apache.poi", name = "poi", version.ref = "poi" }
+poi-ooxml = { group = "org.apache.poi", name = "poi-ooxml", version.ref = "poi" }
+poi-scratchpad = { group = "org.apache.poi", name = "poi-scratchpad", version.ref = "poi" }
+aalto-xml = { group = "com.fasterxml", name = "aalto-xml", version.ref = "aaltoXml" }
 
 
 [plugins]

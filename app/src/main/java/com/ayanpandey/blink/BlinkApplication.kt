@@ -17,6 +17,12 @@ class BlinkApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        
+        // Configure Aalto XML parser properties for Apache POI compatibility on Android
+        System.setProperty("org.apache.poi.javax.xml.stream.XMLInputFactory", "com.fasterxml.aalto.stax.InputFactoryImpl")
+        System.setProperty("org.apache.poi.javax.xml.stream.XMLOutputFactory", "com.fasterxml.aalto.stax.OutputFactoryImpl")
+        System.setProperty("org.apache.poi.javax.xml.stream.XMLEventFactory", "com.fasterxml.aalto.stax.EventFactoryImpl")
+
         container = AppContainerImpl(this)
         container.logger.i(TAG, "BlinkApplication initialized successfully.")
 
