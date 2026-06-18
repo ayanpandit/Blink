@@ -295,7 +295,7 @@ private fun renderPptxSlide(inputStream: java.io.InputStream, slideIndex: Int, r
         canvas.drawColor(Color.WHITE)
         val scale = renderWidth.toFloat() / pageSize.width.toFloat()
         canvas.scale(scale, scale)
-        slide.draw(canvas)
+        slide.draw(com.android.internal.awt.AndroidGraphics2D(canvas))
         bitmap
     }
 }
@@ -326,7 +326,7 @@ private fun renderPptSlide(inputStream: java.io.InputStream, slideIndex: Int, re
         canvas.drawColor(Color.WHITE)
         val scale = renderWidth.toFloat() / pageSize.width.toFloat()
         canvas.scale(scale, scale)
-        slide.draw(canvas)
+        slide.draw(com.android.internal.awt.AndroidGraphics2D(canvas))
         bitmap
     }
 }

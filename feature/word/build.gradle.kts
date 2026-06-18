@@ -59,6 +59,7 @@ dependencies {
     implementation(libs.aalto.xml) {
         exclude(group = "stax", module = "stax-api")
     }
+    implementation(libs.android.awt)
 
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
