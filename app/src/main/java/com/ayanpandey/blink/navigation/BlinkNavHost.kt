@@ -110,9 +110,10 @@ fun BlinkNavHost(
             val viewModel = androidx.lifecycle.viewmodel.compose.viewModel {
                 com.ayanpandey.blink.feature.viewer.ViewerViewModel(
                     appContainer.documentViewer,
-                    emptyList()
+                    appContainer.renderers
                 )
             }
+
             com.ayanpandey.blink.feature.viewer.ViewerScreen(
                 uriString = uri,
                 viewModel = viewModel,

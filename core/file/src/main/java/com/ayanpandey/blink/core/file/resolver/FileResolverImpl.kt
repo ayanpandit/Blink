@@ -14,6 +14,8 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.InputStream
 import java.util.Locale
+import android.os.ParcelFileDescriptor
+
 
 @Suppress("TooGenericExceptionCaught")
 class FileResolverImpl(
@@ -218,6 +220,53 @@ class FileResolverImpl(
                 Result.failure(AppErrorException(AppError.FileError.CorruptedUri))
             }
         }
+
+    override suspend fun openFileDescriptor(uriString: String): Result<ParcelFileDescriptor> =
+        withContext(Dispatchers.IO) {
+            logger.d(TAG, "Opening ParcelFileDescriptor for URI: $uriString")
+            try {
+                val uri = Uri.parse(uriString)
+                    ?: return@withContext Result.failure(AppErrorException(AppError.FileError.InvalidUri))
+
+                val activeContext = getActiveContext()
+                val resolver = activeContext.contentResolver
+
+                // Try to persist read permission
+                if (uri.scheme == "content") {
+                    try {
+                        logger.d(TAG, "Attempting to take persistable read permission inside openFileDescriptor for $uri")
+                        resolver.takePersistableUriPermission(
+                            uri,
+                            Intent.FLAG_GRANT_READ_URI_PERMISSION,
+                        )
+                        logger.i(TAG, "Persistable read permission taken successfully inside openFileDescriptor for $uri")
+                    } catch (e: SecurityException) {
+                        logger.w(TAG, "Failed to take persistable permission during pfd open: ${e.message}", e)
+                    }
+                }
+
+                logger.d(TAG, "Opening PFD for content URI: $uri")
+                val pfd = resolver.openFileDescriptor(uri, "r")
+                    ?: return@withContext Result.failure(AppErrorException(AppError.FileError.FileNotFound))
+                logger.i(TAG, "ParcelFileDescriptor opened successfully for $uri")
+                Result.success(pfd)
+            } catch (e: SecurityException) {
+                logger.e(TAG, "SecurityException opening PFD: $uriString", e)
+                val stackTrace = e.stackTraceToString()
+                Result.failure(
+                    AppErrorException(
+                        AppError.FileError.PermissionDenied(
+                            causeMessage = e.message,
+                            stackTrace = stackTrace
+                        )
+                    )
+                )
+            } catch (e: Exception) {
+                logger.e(TAG, "Error opening PFD: $uriString", e)
+                Result.failure(AppErrorException(AppError.FileError.CorruptedUri))
+            }
+        }
+
 
     @Suppress("NestedBlockDepth")
     private fun resolveContentMetadata(

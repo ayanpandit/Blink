@@ -24,6 +24,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.ayanpandey.blink.domain.model.Document
 import com.ayanpandey.blink.domain.model.DocumentState
+import com.ayanpandey.blink.core.ui.ComposableDocumentRenderer
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,10 +66,18 @@ fun ViewerScreen(
                     CircularProgressIndicator()
                 }
                 is DocumentState.Ready -> {
-                    DocumentInfo(
-                        document = currentState.document,
-                        rendererName = viewModel.getAssignedRenderer(currentState.document.documentType)
-                    )
+                    val activeRenderer = viewModel.getRenderer(currentState.document.documentType)
+                    if (activeRenderer is ComposableDocumentRenderer) {
+                        activeRenderer.Render(
+                            document = currentState.document,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    } else {
+                        DocumentInfo(
+                            document = currentState.document,
+                            rendererName = activeRenderer?.name ?: "No Renderer Assigned"
+                        )
+                    }
                 }
                 is DocumentState.Error -> {
                     Column(

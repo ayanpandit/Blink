@@ -7,7 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.7] - 2026-06-18
+
+### Added
+- **Phase 5 Office & Text Parsers**: Renderers for all remaining formats.
+- Integrated `androidmsc` pre-built Android port of Apache POI.
+- `WordRenderer` (.doc, .docx) parsing paragraphs with bold/italic styles into a `LazyColumn`.
+- `ExcelRenderer` (.xls, .xlsx) providing a tabbed interface for sheets and a virtualized 2D grid for cells.
+- `PptRenderer` (.ppt, .pptx) rendering slides page-by-page off-thread into an `LruCache` using Android `Canvas`.
+- `TxtRenderer` (.txt) rendering up to 50,000 lines of plain text natively.
+- `CsvRenderer` (.csv) manually parsing CSV fields (accounting for quotes) and rendering a virtualized 2D grid.
+- Bumped app versions to `versionCode = 8` and `versionName = "1.0.7"`.
+
+## [1.0.6] - 2026-06-18
+
+### Added
+- **Phase 4 PDF Engine**: Initial production native PDF renderer integrated.
+- Native `com.github.mhiew:pdfium-android` JNI dependency integration.
+- `ComposableDocumentRenderer` sub-interface inside `:core:ui` module to decouple presentation from the pure domain layer.
+- `openFileDescriptor` API on `FileResolver` and `FileResolverImpl` to expose system parcel descriptors for native PDF rendering.
+- `PdfRenderer` implementation in feature module, which wraps the Compose `PdfViewer` screen.
+- Lazy vertical page list (`LazyColumn`) utilizing dimension pre-cache aspect ratios to prevent scrolling layout jumps.
+- Asynchronous off-thread page rendering into bitmaps via native PDFium JNI.
+- Dynamic LruCache backing (max 6 bitmaps) to keep scrolling clean and avoid `OutOfMemoryError` conditions.
+- GPU-accelerated pinch-to-zoom and pan gestures with boundary limits to fit screen viewports.
+- Bottom overlay page counter HUD tracking active view progress.
+- Unit test suite `PdfRendererTest` inside `:feature:pdf` and updated `ViewerViewModelTest` testing selection.
+
+### Changed
+- Bumped app versions to `versionCode = 7` and `versionName = "1.0.6"`.
+- Wired `PdfRenderer` into manual DI container `AppContainerImpl`.
+- Updated `BlinkNavHost` and `ViewerScreen` to match rendering.
+
 ## [0.4.1-alpha] - 2026-06-18
+
 
 ### Fixed
 - **Phase 3 Blocking Bug**: `DocumentViewerImpl.loadDocument()` used Java reflection (`getDeclaredField("fd")`) to extract a `FileDescriptor` from the InputStream returned by `ContentResolver.openInputStream()`. On Android, this returns `ParcelFileDescriptor.AutoCloseInputStream`, which does NOT have an `fd` field. This threw `NoSuchFieldException`, caught by a generic `catch` block and misreported as `AppError.FileError.CorruptedUri`. Since `DocumentFactory` only uses metadata fields (name, MIME, size) and not the FileDescriptor, the entire reflection/InputStream flow was removed. The factory now receives a dummy `FileDescriptor()`.

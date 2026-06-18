@@ -115,3 +115,27 @@ This log lists significant architectural decisions made during the design of Bli
 * **Reason**: The original implementation opened an `InputStream` via `ContentResolver.openInputStream()` and used Java reflection (`getDeclaredField("fd")`) to extract a `FileDescriptor` from the stream. On Android, `openInputStream()` returns `ParcelFileDescriptor.AutoCloseInputStream`, which does not expose an `fd` field. This caused `NoSuchFieldException` on every document load, silently mapped to a `CorruptedUri` error. Since `DocumentFactory.createDocument()` only uses metadata fields for type detection and model construction, the InputStream and FileDescriptor are unnecessary at this stage. File content access (via InputStream) will be handled by individual format renderers in later phases.
 * **Impact**: `DocumentFactory.createDocument()` still accepts a `FileDescriptor` parameter for API forward-compatibility with future rendering engines, but receives a dummy `FileDescriptor()` during the architecture validation phase.
 
+
+---
+ 
+ ## 2026-06-18: Native PDFium Library Selection for Maven Central Compatibility
+ 
+ * **Decision**: Add `com.github.mhiew:pdfium-android:1.9.2` from Maven Central as the native JNI PDFium wrapper instead of the deprecated JCenter library.
+ * **Reason**: JCenter is shut down, meaning the original library is no longer available. This fork is stable, lightweight, hosted on Maven Central, and compiles seamlessly for arm64-v8a, armeabi-v7a, x86, and x86_64.
+ * **Impact**: Added compile dependency to `:feature:pdf` module. Enables fast native page rendering directly into bitmaps.
+ 
+ ---
+ 
+ ## 2026-06-18: Compose-Aware Sub-Interface for Decoupled Rendering Contracts
+ 
+ * **Decision**: Create a `ComposableDocumentRenderer` interface extending `DocumentRenderer` in `:core:ui` rather than adding Jetpack Compose dependencies directly to `:domain`.
+ * **Reason**: Clean Architecture guidelines prohibit UI/Compose imports in the domain layer. Defining this sub-interface in the shared `:core:ui` module allows features (e.g. `:feature:pdf`) to implement Compose rendering while keeping the `:domain` layer pure Kotlin.
+ * **Impact**: `PdfRenderer` implements `ComposableDocumentRenderer`. `ViewerScreen` delegates composition rendering directly to matched renderers by safe casting.
+ 
+ ---
+ 
+ ## 2026-06-18: Expose file descriptors via FileResolver contract for native PDFium
+ 
+ * **Decision**: Add `openFileDescriptor` function to the `FileResolver` interface in `:domain`, implemented in `:core:file` using standard ContentResolver APIs.
+ * **Reason**: PDFium JNI rendering relies on a native `ParcelFileDescriptor` to avoid loading entire files into memory. Moving this to `FileResolver` allows format renderers to obtain descriptors safely using activity-scoped content resolvers and permission tracking logic.
+ * **Impact**: `FileResolver` contract extended. `PdfViewer` fetches file descriptors off the main thread when loading pages.

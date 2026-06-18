@@ -32,25 +32,33 @@ This file lists the current status of each project development phase.
 ---
 
 ## Phase 3: Core Document Engine
-* **Status**: `IN_PROGRESS`
-* **Completion Date**: N/A
-* **Summary**: Established the unified document architecture framework. Created domain-level type system (`DocumentType` enum), `Document` data model, `DocumentState` sealed interface for lifecycle management, and viewer/renderer/factory contracts (`DocumentViewer`, `DocumentRenderer`, `DocumentFactory`). Extended `AppError` with `DocumentError` hierarchy. Implemented `DocumentFactoryImpl` in `:core:file` for type detection and whitelist validation. Created new `:feature:viewer` module with `DocumentViewerImpl`, `ViewerViewModel`, and placeholder `ViewerScreen`. Wired navigation routes and DI. Added "Open in Viewer" button on `MetadataScreen`. All unit tests pass. Pending physical device validation of Metadata → Viewer navigation flow.
+* **Status**: `COMPLETED`
+* **Completion Date**: 2026-06-18
+* **Summary**: Established the unified document architecture framework. Created domain-level type system (`DocumentType` enum), `Document` data model, `DocumentState` sealed interface for lifecycle management, and viewer/renderer/factory contracts (`DocumentViewer`, `DocumentRenderer`, `DocumentFactory`). Extended `AppError` with `DocumentError` hierarchy. Implemented `DocumentFactoryImpl` in `:core:file` for type detection and whitelist validation. Created new `:feature:viewer` module with `DocumentViewerImpl`, `ViewerViewModel`, and placeholder `ViewerScreen`. Wired navigation routes and DI. Added "Open in Viewer" button on `MetadataScreen`. All unit tests pass. Physical device validation confirmed navigation and error diagnostic cards.
 * **Key Decisions**:
   - `DocumentFactory` interface placed in `:domain:contract` to avoid circular module dependencies (`:feature:viewer` depends on `:domain`, not `:core:file`).
-  - Empty renderer list passed to `ViewerViewModel` — renderers will be registered in subsequent phases.
+  - Empty renderer list passed to `ViewerViewModel` — renderers registered in Phase 4.
 * **Blocking Bugs Fixed**:
   - v1.0.5: Removed broken Java reflection code in `DocumentViewerImpl.loadDocument()` that attempted to extract a `FileDescriptor` from `ContentResolver.openInputStream()`. Android's `ParcelFileDescriptor.AutoCloseInputStream` does not expose an `fd` field — causing `NoSuchFieldException` mapped to `CorruptedUri` error. The factory only needs metadata fields, not a real file descriptor.
 
 ---
 
-## Phase 4: Office & Text Parsers
-* **Status**: `NOT_STARTED`
-* **Completion Date**: N/A
-* **Summary**: Apache POI setup, Word layouts, PowerPoint slide decks, CSV grid, and TXT viewer modules remain to be implemented.
+## Phase 4: PDF Engine
+* **Status**: `COMPLETED`
+* **Completion Date**: 2026-06-18
+* **Summary**: Implemented the first native production document renderer. Integrated native `pdfium-android` JNI wrapper. Created `ComposableDocumentRenderer` in `:core:ui` module to decouple Compose rendering logic from the domain layer. Implemented `PdfRenderer` wrapping the native Compose `PdfViewer` viewport. Implemented vertical lazy scrolling via `LazyColumn` pre-allocating page sizes to prevent scrolling jank, asynchronous page-by-page off-thread rendering, LRU caching (max 6 bitmaps) to manage memory, and pinch-to-zoom/pan gesture controls. Passes all unit tests (PDF rendering properties, viewModel renderer selection).
 
 ---
 
-## Phase 5: Optimization, Benchmarks & Release
+## Phase 5: Office & Text Parsers
+* **Status**: `COMPLETED`
+* **Completion Date**: 2026-06-18
+* **Summary**: Integrated Apache POI (`androidmsc` fork) for Word (.doc, .docx), Excel (.xls, .xlsx), and PowerPoint (.ppt, .pptx) rendering. Created Compose `LazyColumn` parsers for Word paragraphs, virtualized 2D grid renderers for Excel and CSV, and `LruCache` bitmap slide rendering for PowerPoint. Added native lightweight `.txt` parser. All 5 new renderers (`WordRenderer`, `ExcelRenderer`, `PptRenderer`, `TxtRenderer`, `CsvRenderer`) integrated into `AppContainerImpl`. Version bumped to 1.0.7.
+
+---
+
+## Phase 6: Optimization, Benchmarks & Release
 * **Status**: `NOT_STARTED`
 * **Completion Date**: N/A
-* **Summary**: Aggressive ProGuard optimizations, startup benchmarking, and APK building tasks remain to be done.
+* **Summary**: Aggressive ProGuard optimizations, startup benchmarking, leak detection, and production release build compiling remain to be done.
+

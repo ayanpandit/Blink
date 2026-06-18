@@ -26,6 +26,11 @@ class ViewerViewModel(
         return renderer?.name ?: "No Renderer Assigned"
     }
 
+    fun getRenderer(docType: DocumentType): DocumentRenderer? {
+        return renderers.find { it.supportedType == docType }
+    }
+
+
     override fun onCleared() {
         super.onCleared()
         documentViewer.closeDocument()

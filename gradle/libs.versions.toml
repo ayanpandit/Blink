@@ -14,6 +14,9 @@ junit = "4.13.2"
 mockk = "1.13.9"
 androidxTestExtJunit = "1.1.5"
 espressoCore = "3.5.1"
+pdfium = "1.9.2"
+poiAndroid = "0.0.15"
+
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -46,6 +49,9 @@ androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "a
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
+pdfium-android = { group = "com.github.mhiew", name = "pdfium-android", version.ref = "pdfium" }
+poi-android = { group = "com.github.BigBadaboom", name = "androidmsc", version.ref = "poiAndroid" }
+
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
